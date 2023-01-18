@@ -8,3 +8,5 @@ match-logs.txt
 match-debug-logs.txt
 match-debug-logs-v2.txt
 match-many-times.txt
+# Local Netlify folder
+.netlify
