@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "server": "nodemon server.js",
+    "server": "./node_modules/.bin/nodemon src/server.js",
     "deploy": "git add . && git commit -m wip && git push heroku master",
     "server-debug": "nodemon --inspect server.js"
   },
