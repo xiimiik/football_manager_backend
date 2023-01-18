@@ -5,7 +5,7 @@ const MathService = require('../services/MathService');
 
 let maleNames = [];
 
-fs.createReadStream('./data/babynames-clean.csv')
+fs.createReadStream('./src/data/babynames-clean.csv')
     .pipe(csv.parse())
     .on('error', error => console.error("Error in (players.js):", error))
     .on('data', row => {
