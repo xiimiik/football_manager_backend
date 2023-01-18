@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Match tests</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="tab">
+    <button class="tablinks" onclick="openTab(event, 'matches')" id="defaultOpen">Matches</button>
+    <button class="tablinks" onclick="openTab(event, 'servers')">Servers</button>
+    <button class="tablinks" onclick="openTab(event, 'gsheets')">Google Sheets (parsers)</button>
+    <button class="tablinks" onclick="openTab(event, 'cards')">Players Cards</button>
+    <button class="tablinks" onclick="openTab(event, 'weekend')">Weekend Leagues</button>
+</div>
+
+<div id="matches" class="tabcontent">
+    <ul class="users"></ul>
+
+    <div class="matches__panel panel">
+        <p>Версия:</p>
+        <select class="matches__panel__select">
+            <option value="V7">V7 (V6 & changed 124 event)</option>
+            <option value="V6">V6 (17 otrezkov & without +-8 adv)</option>
+            <option value="V5">V5 (17 otrezkov & with +-8 adv)</option>
+            <option value="V4">V4 (16 otrezkov & +-8 adv)</option>
+            <option value="V3">V3 (current)</option>
+            <option value="V2">V2 (12.08.2022 + without advantage)</option>
+            <option value="V1">V1 (12.08.2022)</option>
+        </select>
+
+        <p>Id матча:</p>
+        <input type="text" class="matches__panel__input matches__panel__match-id">
+
+        <p>Количество повторений:</p>
+        <input type="text" class="matches__panel__input matches__panel__count" value="10">
+
+        <p>Сохранять результат в бд:</p>
+        <input type="checkbox" class="matches__panel__input matches__panel__save-to-bd">
+
+        <p>Результат:</p>
+        <textarea type="text" class="matches__panel__textarea matches__panel__result" readonly></textarea>
+
+        <div>
+            <button class="matches__panel__start-btn">Запуск</button>
+            <div class="lds-dual-ring matches-ring"></div>
+        </div>
+    </div>
+</div>
+<div id="servers" class="tabcontent">
+    <ul class="servers"></ul>
+
+    <div class="servers__panel panel">
+        <p>Выберите регион:</p>
+        <select class="servers__panel__select">
+            <option value="1">EUR</option>
+            <option value="2">NA & SA</option>
+            <option value="3">ME & Africa</option>
+            <option value="4">Asia</option>
+        </select>
+
+        <div>
+            <button class="servers__panel__start-btn">Создать сервер</button>
+            <div class="lds-dual-ring servers-ring"></div>
+        </div>
+    </div>
+</div>
+<div id="gsheets" class="tabcontent">
+    <div class="gsheets__panel panel">
+        <div>
+            <button class="gsheets__panel__start-btn">Парсить google sheets</button>
+            <div class="lds-dual-ring gsheets-ring"></div>
+        </div>
+    </div>
+</div>
+<div id="cards" class="tabcontent">
+    <div class="cards__panel panel">
+        <div>
+            <p>Количество карт:</p>
+            <input type="text" class="cards__panel__input cards__panel__players-count" value="10">
+
+            <p>Результат:</p>
+            <textarea type="text" class="cards__panel__textarea cards__panel__result" readonly></textarea>
+
+            <button class="cards__panel__start-btn">Сгенерировать карты игроков</button>
+            <div class="lds-dual-ring cards-ring"></div>
+        </div>
+    </div>
+</div>
+<div id="weekend" class="tabcontent">
+    <ul class="weekend-leagues">
+        <li class="weekend-leagues__phase-1"></li>
+        <li class="weekend-leagues__phase-2"></li>
+        <li class="weekend-leagues__phase-3"></li>
+        <li class="weekend-leagues__phase-4"></li>
+        <li class="weekend-leagues__phase-5"></li>
+        <li class="weekend-leagues__phase-6"></li>
+        <li class="weekend-leagues__phase-7"></li>
+        <li class="weekend-leagues__phase-8"></li>
+        <li class="weekend-leagues__phase-9"></li>
+        <li class="weekend-leagues__phase-10"></li>
+    </ul>
+
+    <div class="weekend__panel panel">
+
+
+        <div>
+            <button class="weekend__panel__start-btn">Сыграть турнир на выходных</button>
+            <div class="lds-dual-ring weekend-ring"></div>
+        </div>
+    </div>
+</div>
+
+
+
+<script src="main.js"></script>
+</body>
+</html>

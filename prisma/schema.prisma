@@ -1,0 +1,188 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+    id                      Int         @id @default(autoincrement())
+    name                    String
+    abbr                    String      @db.VarChar(5)
+    logo                    String
+    avatar                  Int
+    avatarTb                Avatar      @relation(fields: [avatar], references: [id])
+    dollars                 Int         @default(0)
+    cCoins                  Int         @default(0)
+    sCoins                  Int         @default(0)
+    tCoins                  Int         @default(0)
+    isBot                   Boolean
+    lastTactic              String?      @db.MediumText
+    lastTeam                String?      @db.MediumText
+
+
+    federated_credentials   Federated_credentials[]
+    players                 User_players?
+    teams1                  Match[]                 @relation("match_player1")
+    teams2                  Match[]                 @relation("match_player2")
+    leaguePlayers           League_players[]
+
+    weekendTeams1          Weekend_match[]          @relation("weekend_teams1")
+    weekendTeams2          Weekend_match[]          @relation("weekend_teams2")
+    weekendLeaguePlayers   Weekend_league_players[]
+}
+
+//карточки игроков============
+model User_players {
+  userId                Int
+  user                  User @relation(fields: [userId], references: [id])
+
+  playersJson           String? @db.MediumText
+  waitingPlayersJson    String? @db.MediumText
+  tempPlayer            String? @db.MediumText
+  tempAction            String? @db.MediumText
+  tempDialogs           String? @db.MediumText
+}
+
+model Federated_credentials {
+  strategy      String  @db.VarChar(20)
+  accountId     String  @db.VarChar(190)
+  userId        Int
+  user          User    @relation(fields: [userId], references: [id])
+
+  @@id([strategy, accountId])
+}
+
+model Avatar {
+      id                Int                 @id @default(autoincrement())
+      name              String
+      avatars_defying   Avatar_defying[]    @relation("avatars_defying")
+      avatars_defeated  Avatar_defying[]    @relation("avatars_defeated")
+      owners            User[]
+}
+
+model Avatar_defying {
+      avatar_id     Int
+      avatar        Avatar @relation("avatars_defying", fields: [avatar_id], references: [id])
+      defeated_id   Int
+      defeated      Avatar @relation("avatars_defeated", fields: [defeated_id], references: [id])
+
+      @@id([avatar_id, defeated_id])
+}
+
+
+model Match {
+    id          Int             @id @default(autoincrement())
+    player1Id   Int
+    player1     User            @relation("match_player1", fields: [player1Id], references: [id])
+    player2Id   Int
+    player2     User            @relation("match_player2", fields: [player2Id], references: [id])
+    score       String?         @db.VarChar(5)
+    leagueId    Int
+    league      League          @relation(fields: [leagueId], references: [id])
+    logs        String?         @db.MediumText
+    time        DateTime
+}
+
+
+model League {
+    id              Int                 @default(autoincrement())
+    isFull          Boolean
+    level           Int
+    server_id       Int
+    server          Game_server         @relation(fields: [server_id], references: [id])
+    country_id      Int
+    country         Country             @relation(fields: [country_id], references: [id])
+
+    leagueMatches   Match[]
+    leaguePlayers   League_players[]
+
+    @@id([level, server_id, country_id])
+    @@index(fields: [id])
+}
+
+model League_players {
+    leagueId    Int
+    league      League @relation(fields: [leagueId], references: [id])
+    playerId    Int
+    player      User @relation(fields: [playerId], references: [id])
+
+    @@id([leagueId, playerId])
+}
+
+model Region {
+    id          Int     @id @default(autoincrement())
+    name        String  @db.VarChar(20)
+
+    servers     Game_server[]
+    countries   Country[]
+}
+
+model Country {
+    id                  Int     @id @default(autoincrement())
+    name                String  @db.VarChar(20)
+    region_id           Int
+    region              Region  @relation(fields: [region_id], references: [id])
+
+    leagues             League[]
+    weekendLeagues      Weekend_league[]
+}
+
+model Game_server {
+    id          Int     @id @default(autoincrement())
+    region_id   Int
+    region      Region  @relation(fields: [region_id], references: [id])
+
+    leagues         League[]
+    weekendLeagues  Weekend_league[]
+}
+
+model Weekend_league {
+    id                      Int                 @id @default(autoincrement())
+    isFull                  Boolean
+    server_id               Int
+    server                  Game_server         @relation(fields: [server_id], references: [id])
+    country_id              Int?
+    country                 Country?             @relation(fields: [country_id], references: [id])
+    level                   Int
+
+    weekendLeagueMatches    Weekend_match[]
+    weekendLeaguePlayers    Weekend_league_players[]
+}
+
+model Weekend_league_players {
+    leagueId    Int
+    league      Weekend_league  @relation(fields: [leagueId], references: [id])
+    playerId    Int
+    player      User            @relation(fields: [playerId], references: [id])
+
+    @@id([leagueId, playerId])
+}
+
+model Weekend_match {
+    id          Int             @id @default(autoincrement())
+    user1_id    Int
+    user1       User            @relation("weekend_teams1", fields: [user1_id], references: [id])
+    user2_id    Int
+    user2       User            @relation("weekend_teams2", fields: [user2_id], references: [id])
+    score       String?         @db.VarChar(5)
+    leagueId    Int
+    league      Weekend_league  @relation(fields: [leagueId], references: [id])
+    logs        String?         @db.MediumText
+    time        DateTime
+}
+
+
+
+
+
+// tmp table
+model Tmp_table {
+    id          Int     @id @default(autoincrement())
+    time        DateTime
+}
