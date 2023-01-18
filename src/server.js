@@ -23,11 +23,11 @@ app.use('/api/debug', require('./routes/debug.router'));
 app.use('/api/admin', require('./routes/admin.router'));
 app.use(errorMiddleware);
 
-// app.listen(PORT, async () => {
-//     await leaguesModule();
-//     await weekendLeaguesModule();
+app.listen(PORT, async () => {
+    await leaguesModule();
+    await weekendLeaguesModule();
 
-//     console.log(`(server.js) Server is listening on port ${PORT}`);
-// });
+    console.log(`(server.js) Server is listening on port ${PORT}`);
+});
 
 module.exports.handler = serverless(app);
