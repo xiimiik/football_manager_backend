@@ -39,7 +39,7 @@ model User {
 
 //карточки игроков============
 model User_players {
-  userId                Int
+  userId                Int  
   user                  User @relation(fields: [userId], references: [id])
 
   playersJson           String? @db.MediumText
@@ -47,6 +47,8 @@ model User_players {
   tempPlayer            String? @db.MediumText
   tempAction            String? @db.MediumText
   tempDialogs           String? @db.MediumText
+
+  @@id([userId])
 }
 
 model Federated_credentials {
@@ -91,7 +93,7 @@ model Match {
 
 
 model League {
-    id              Int                 @default(autoincrement())
+    id              Int                 @unique @default(autoincrement())
     isFull          Boolean
     level           Int
     server_id       Int
