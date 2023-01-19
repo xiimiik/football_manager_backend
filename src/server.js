@@ -21,6 +21,11 @@ app.use('/api/match', require('./routes/match.router'));
 app.use('/api/weekend_tournament', require('./routes/weekend_tournament.router'));
 app.use('/api/debug', require('./routes/debug.router'));
 app.use('/api/admin', require('./routes/admin.router'));
+app.use('/test', (req, res) => {
+  res.json({
+    'test': 'test',
+  });
+})
 app.use(errorMiddleware);
 
 app.listen(PORT, async () => {
