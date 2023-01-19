@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -22,8 +22,8 @@ model User {
     sCoins                  Int         @default(0)
     tCoins                  Int         @default(0)
     isBot                   Boolean
-    lastTactic              String?      @db.MediumText
-    lastTeam                String?      @db.MediumText
+    lastTactic              String?
+    lastTeam                String?
 
 
     federated_credentials   Federated_credentials[]
@@ -42,11 +42,11 @@ model User_players {
   userId                Int  
   user                  User @relation(fields: [userId], references: [id])
 
-  playersJson           String? @db.MediumText
-  waitingPlayersJson    String? @db.MediumText
-  tempPlayer            String? @db.MediumText
-  tempAction            String? @db.MediumText
-  tempDialogs           String? @db.MediumText
+  playersJson           String?
+  waitingPlayersJson    String?
+  tempPlayer            String?
+  tempAction            String?
+  tempDialogs           String?
 
   @@id([userId])
 }
@@ -87,7 +87,7 @@ model Match {
     score       String?         @db.VarChar(5)
     leagueId    Int
     league      League          @relation(fields: [leagueId], references: [id])
-    logs        String?         @db.MediumText
+    logs        String?         
     time        DateTime
 }
 
@@ -175,7 +175,7 @@ model Weekend_match {
     score       String?         @db.VarChar(5)
     leagueId    Int
     league      Weekend_league  @relation(fields: [leagueId], references: [id])
-    logs        String?         @db.MediumText
+    logs        String?
     time        DateTime
 }
 
