@@ -1,5 +1,5 @@
 // const host = 'http://localhost:8000';
-const host = 'https://footlball-manager.herokuapp.com';
+const host = 'https://football-manager-backend.onrender.com';
 
 window.onload = function () {
     document.getElementById("defaultOpen").click();
