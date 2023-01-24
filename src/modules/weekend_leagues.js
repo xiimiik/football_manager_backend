@@ -4133,9 +4133,9 @@ async function weekendLeaguesModule() {
     }
 
     setTimeout(async () => {
-      setInterval(createWeekendLeagues, 1000 * 60 * 60 * 24 * 7);
+      setInterval(createWeekendLeagues_v2, 1000 * 60 * 60 * 24 * 7);
 
-      await createWeekendLeagues(saturdayTimestamp);
+      await createWeekendLeagues_v2(saturdayTimestamp);
     }, saturdayTimestamp - now);
   } catch (e) {
     console.log("Error:", e);

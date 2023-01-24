@@ -100,15 +100,6 @@ DebugApiRouter.get(
       for (let leagueIdx = 0; leagueIdx < allLeagues.length; leagueIdx++) {
         let currLeague = allLeagues[leagueIdx];
 
-        //! рефактор =======================
-        function showRoundedArr(arr) {
-          let fStr = arr[0].join(" "),
-            sStr = arr[1].join(" "),
-            res = fStr + "\n" + sStr;
-
-          console.log("==============\n" + res + "\n==============");
-        }
-
         function roundedArrStep(arr) {
           let num0 = arr[0][0],
             num1 = arr[0][1],
@@ -142,8 +133,6 @@ DebugApiRouter.get(
           arr[1][1] = num12;
           arr[1][0] = num13;
         }
-
-        //! рефактор =======================
 
         let firstTeams = [],
           secondTeams = [];

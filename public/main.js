@@ -1,4 +1,4 @@
-// const host = 'http://localhost:8000';
+// const host = 'http://localhost:8010';
 const host = 'https://football-manager-backend.onrender.com';
 
 window.onload = function () {
@@ -60,35 +60,19 @@ window.onload = function () {
 
             switch (server.region.id) {
                 case 1:
-                    region = 'europe'
+                    region = 'EU'
                     break;
 
                 case 2:
-                    region = 'north-america'
+                    region = 'NA & SA'
                     break;
 
                 case 3:
-                    region = 'south-america'
+                    region = 'ME & Africa'
                     break;
 
                 case 4:
-                    region = 'north-asia'
-                    break;
-
-                case 5:
-                    region = 'south-asia'
-                    break;
-
-                case 6:
-                    region = 'north-africa'
-                    break;
-
-                case 7:
-                    region = 'south-africa'
-                    break;
-
-                case 8:
-                    region = 'close-east'
+                    region = 'Asia'
                     break;
             }
 
@@ -392,37 +376,21 @@ window.onload = function () {
 
             let region;
             switch (server.region.id) {
-                case 1:
-                    region = 'europe'
-                    break;
+              case 1:
+                region = 'EU'
+                break;
 
-                case 2:
-                    region = 'north-america'
-                    break;
+            case 2:
+                region = 'NA & SA'
+                break;
 
-                case 3:
-                    region = 'south-america'
-                    break;
+            case 3:
+                region = 'ME & Africa'
+                break;
 
-                case 4:
-                    region = 'north-asia'
-                    break;
-
-                case 5:
-                    region = 'south-asia'
-                    break;
-
-                case 6:
-                    region = 'north-africa'
-                    break;
-
-                case 7:
-                    region = 'south-africa'
-                    break;
-
-                case 8:
-                    region = 'close-east'
-                    break;
+            case 4:
+                region = 'Asia'
+                break;
             }
 
             serverItem.className = 'servers__item ' + region;
