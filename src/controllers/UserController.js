@@ -3,6 +3,26 @@ const UserService = require("../services/UserService");
 const ApiError = require("../exceptions/api-error");
 
 class UserController {
+    async getInfo(req, res, next) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
+
+            const user = await UserService.getUserInfo(req.params.id);
+            if (!user) throw ApiError.BadRequest(`Игрок #${req.params.id} не был найден!`);
+
+            res.json({
+                message: `Данные игрока #${req.params.id}:`,
+                details: {
+                    user
+                }
+            });
+        }
+        catch (e) {
+            next(e);
+        }
+    }
+
     async getProgress(req, res, next) {
         try {
             const errors = validationResult(req);
@@ -60,6 +80,26 @@ class UserController {
             next(e);
         }
     }
+
+    async getMoney(req, res, next) {
+      try {
+          const errors = validationResult(req);
+          if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
+
+          const user = await UserService.getUserMoney(req.params.id);
+          if (!user) throw ApiError.BadRequest(`Игрок #${req.params.id} не был найден!`);
+
+          res.json({
+              message: `Деньги игрока #${req.params.id}:`,
+              details: {
+                  user
+              }
+          });
+      }
+      catch (e) {
+          next(e);
+      }
+  }
 
     async updateMoney(req, res, next) {
         try {

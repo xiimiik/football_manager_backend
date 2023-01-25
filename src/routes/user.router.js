@@ -5,6 +5,17 @@ const { check } = require("express-validator");
 const UserApiRouter = Router();
 
 UserApiRouter.get(
+  "/:id",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.getInfo
+);
+
+UserApiRouter.get(
   "/progress/:id",
   [
     check("id")
@@ -43,6 +54,17 @@ UserApiRouter.put(
     check("logo").isString().withMessage("Поле <logo> должно быть строкой!"),
   ],
   UserController.updateProfile
+);
+
+UserApiRouter.get(
+  "/getMoney/:id",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.getMoney
 );
 
 UserApiRouter.put(

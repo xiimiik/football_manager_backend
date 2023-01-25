@@ -1,6 +1,25 @@
 const { prisma } = require("../../prisma-client");
 
 class UserService {
+  async getUserInfo(id) {
+    return await prisma.user.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        name: true,
+        abbr: true,
+        logo: true,
+        dollars: true,
+        cCoins: true,
+        sCoins: true,
+        tCoins: true,
+        avatar: true,
+      },
+    });
+  }
+
   async getUserProgress(id) {
     return await prisma.user.findFirst({
       where: {
@@ -48,6 +67,20 @@ class UserService {
     } catch {
       return false;
     }
+  }
+
+  async getUserMoney(id) {
+    return await prisma.user.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        dollars: true,
+        cCoins: true,
+        sCoins: true,
+        tCoins: true,
+      },
+    });
   }
 
   async updateUserMoney(id, moneyType, amount) {
