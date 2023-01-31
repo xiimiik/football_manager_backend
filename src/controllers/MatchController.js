@@ -85,6 +85,28 @@ class MatchController {
             next(e);
         }
     }
+  
+    async getCurrentMatch(req, res, next) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
+
+            const userId = +req.params.userId;
+            const match = await MatchService.getCurrentMatch(userId);
+
+            if (!match) throw ApiError.BadRequest('Матч не был найден!');
+
+            res.json({
+                message: `Информация по текущему матчу игрока #${userId}:`,
+                details: {
+                  match
+                }
+            });
+        }
+        catch (e) {
+            next(e);
+        }
+    }
 }
 
 module.exports = new MatchController();

@@ -55,4 +55,15 @@ MatchApiRouter.get(
   MatchController.getLeagueLeaderboard
 );
 
+MatchApiRouter.get(
+  "/currentMatch/:userId",
+  [
+    check("userId")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  MatchController.getCurrentMatch
+);
+
 module.exports = MatchApiRouter;
