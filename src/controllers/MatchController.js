@@ -1,5 +1,5 @@
 const ApiError = require("../exceptions/api-error");
-const MatchService = require("../services/MatсhService");
+const MatchService = require("../services/MatchService");
 const {validationResult} = require("express-validator");
 
 class MatchController {
