@@ -48,7 +48,7 @@ class UserController {
             const errors = validationResult(req);
             if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
 
-            const leagueMatches = await UserService.getUserCurrentLeagueMatches(req.params.id);
+            const leagueMatches = await UserService.getUserCurrentLeagueMatches(+req.params.id);
             if (!leagueMatches.length) throw ApiError.BadRequest(`Игрок #${req.params.id} не существует!`);
 
             res.json({

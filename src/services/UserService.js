@@ -37,18 +37,54 @@ class UserService {
   }
 
   async getUserCurrentLeagueMatches(id) {
-    return await prisma.match.findMany({
+    const MatchResult = Object.freeze({
+      NotOverYet: "Not Over Yet",
+      Won: "Won",
+      Lost: "Lost",
+      Draw: "Draw",
+    });
+
+    const leagueMatches = await prisma.match.findMany({
       where: {
-        OR: [
-          {
-            player1Id: id,
-          },
-          {
-            player2Id: id,
-          },
-        ],
+        OR: [{ player1Id: id }, { player2Id: id }],
       },
     });
+
+    const matchData = await Promise.all(
+      leagueMatches.map(async (match) => {
+        let result = MatchResult.NotOverYet;
+        const enemyId =
+          match.player1Id === id ? match.player2Id : match.player1Id;
+        const enemy = await prisma.user.findUnique({
+          where: {
+            id: enemyId,
+          },
+          select: {
+            logo: true,
+          },
+        });
+
+        if (match.score) {
+          const score = match.score.split(":");
+
+          if (score[0] === score[1]) {
+            result = MatchResult.Draw;
+          } else if (score[0] > score[1] && enemyId === match.player1Id) {
+            result = MatchResult.Lost;
+          } else if (score[0] > score[1] && enemyId === match.player2Id) {
+            result = MatchResult.Won;
+          }
+        }
+
+        return {
+          enemyLogo: enemy.logo,
+          result,
+          matchScore: match.score,
+        };
+      })
+    );
+
+    return matchData;
   }
 
   async updateUserProfile(id, name, abbr, logo) {
