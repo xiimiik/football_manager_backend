@@ -20,6 +20,25 @@ class LeagueController {
             next(e);
         }
     }
+
+    async getLeagueTeamsById(req, res, next) {
+        try {
+            const leagueId = req.params.leagueId;
+
+            const teams = await LeagueService.getLeagueTeamsById(leagueId);
+            if (!teams) throw ApiError.BadRequest('Неверная лига!');
+
+            res.json({
+                message: `Список команд в лиге #${leagueId}:`,
+                details: {
+                  teams
+                }
+            });
+        }
+        catch (e) {
+            next(e);
+        }
+    }
 }
 
 module.exports = new LeagueController();

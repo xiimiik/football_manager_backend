@@ -14,4 +14,15 @@ LeagueApiRouter.get(
   LeagueController.getLeagueByInviteCode
 );
 
+LeagueApiRouter.get(
+  "/league_teams_list/:leagueId",
+  [
+    check("leagueId")
+      .isInt()
+      .withMessage("Поле <leagueId> должно быть типа integer!")
+      .toInt(),
+  ],
+  LeagueController.getLeagueTeamsById
+);
+
 module.exports = LeagueApiRouter;
