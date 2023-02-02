@@ -4039,6 +4039,71 @@ async function calcMatchesPhase(phase) {
         time: matchesTime,
       });
 
+    // leaguesQueries.push(
+    //   prisma.weekend_league.update({
+    //     where: {
+    //       id: league.id
+    //     },
+    //     data: {
+    //       level: league.level + 1,
+    //       weekendLeaguePlayers: {
+    //         create: winnedUsers,
+    //       },
+    //       weekendLeagueMatches: {
+    //         create: matchesData,
+    //       },
+    //     },
+    //   })
+    // );
+
+    // leaguesQueries.push(
+    //   prisma.weekend_league.update({
+    //     where: {
+    //       id: league.id
+    //     },
+    //     data: {
+    //       level: league.level + 1,
+    //       weekendLeaguePlayers: {
+    //         deleteMany: {
+    //           playerId: winnedUsers
+    //         },
+    //         createMany: {
+    //           data: winnedUsers
+    //         },
+    //       },
+    //       weekendLeagueMatches: {
+    //         // deleteMany: {
+    //         //   leagueId: league.id
+    //         // },
+    //         createMany: {
+    //           data: matchesData
+    //         },
+    //       },
+    //     },
+    //   })
+    // );
+
+    // leaguesQueries.push(
+    //   prisma.weekend_league.update({
+    //     where: {
+    //       id: league.id
+    //     },
+    //     data: {
+    //       level: league.level + 1,
+    //     },
+    //   }),
+    //   prisma.weekend_match.createMany({
+    //     data: matchesData
+    //   }),
+    //   prisma.weekend_league_players.deleteMany({
+    //     where: {
+    //       id: {
+    //         notIn: winnedUsers.map(user => user.playerId)
+    //       }
+    //   }
+    //   })
+    // );
+    
     leaguesQueries.push(
       prisma.weekend_league.create({
         data: {
@@ -4145,4 +4210,6 @@ async function weekendLeaguesModule() {
 module.exports = {
   weekendLeaguesModule,
   createLeaguesNMatches,
+  playMatchesPhase,
+  calcMatchesPhase,
 };

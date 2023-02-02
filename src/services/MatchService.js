@@ -146,6 +146,7 @@ class MathService {
       select: {
         logs: true,
         time: true,
+        leagueId: true,
         player1: {
           select: {
             logo: true,

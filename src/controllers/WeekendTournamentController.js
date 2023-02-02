@@ -64,6 +64,29 @@ class WeekendTournamentController {
             next(e);
         }
     }
+
+    async getLeagueLeaderboard(req, res, next) {
+      try {
+          const errors = validationResult(req);
+          if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
+
+          const leagueId = +req.params.id,
+              users = await WeekendTournamentService.getLeagueLeaderboard(leagueId);
+
+          if (users === null) throw ApiError.BadRequest('Такая лига не была найдена!');
+          if (users === []) throw ApiError.BadRequest(`Ещё не было сыграно ни одного матча в лиге #${leagueId}!`);
+
+          res.json({
+              message: `Рейтиновая таблица лиги #${leagueId}:`,
+              details: {
+                  users
+              }
+          });
+      }
+      catch (e) {
+          next(e);
+      }
+  }
 }
 
 module.exports = new WeekendTournamentController();

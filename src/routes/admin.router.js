@@ -95,10 +95,9 @@ AdminApiRouter.get(
     try {
       let gameServerId = +req.params.server_id,
         countryId = +req.params.country_id,
-        countryLeagues = await prisma.league_tmp.findMany({
+        countryLeagues = await prisma.league.findMany({
           select: {
             id: true,
-            isFull: true,
             level: true,
           },
           where: {
@@ -131,7 +130,7 @@ AdminApiRouter.get(
 AdminApiRouter.get("/league/:league_id/users", async (req, res, next) => {
   try {
     let leagueId = +req.params.league_id,
-      league = await prisma.league_tmp.findFirst({
+      league = await prisma.league.findFirst({
         select: {
           leaguePlayers: {
             select: {

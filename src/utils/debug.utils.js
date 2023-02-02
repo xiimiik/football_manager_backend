@@ -7,99 +7,29 @@ const {
 } = require("../modules/players");
 const { avatarDefying } = require("../data/avatars");
 const { createLastTeam } = require("./bots.utils");
+const {
+  playMatchesPhase,
+  calcMatchesPhase,
+  createLeaguesNMatches,
+} = require("../modules/weekend_leagues");
 const MathService = require("../services/MathService");
 
 // weekend_league functions ==============================================================================================
 async function playPhaseMatches_debug(phase) {
-  switch (phase) {
-    case 1:
-      await playMatches1Phase();
-      await calcMatches1Phase();
-      break;
-
-    case 2:
-      await playMatches2Phase();
-      await calcMatches2Phase();
-      break;
-
-    case 3:
-      await playMatches3Phase();
-      await calcMatches3Phase();
-      break;
-
-    case 4:
-      await playMatches4Phase();
-      await calcMatches4Phase();
-      break;
-
-    case 5:
-      await playMatches5Phase();
-      await calcMatches5Phase();
-      break;
-
-    case 6:
-      await playMatches6Phase();
-      await calcMatches6Phase();
-      break;
-
-    case 7:
-      await playMatches7Phase();
-      await calcMatches7Phase();
-      break;
-
-    case 8:
-      await playMatches8Phase();
-      await calcMatches8Phase();
-      break;
-
-    case 9:
-      await playMatches9Phase();
-      await calcMatches9Phase();
-      break;
-
-    case 10:
-      await playMatches10Phase();
-      await calcMatches10Phase();
-      break;
-
-    default:
-      console.log(`(modules/weekend_leagues.js) Such phase doesn't exists!`);
-      break;
+  try {
+    await playMatchesPhase(phase);
+    await calcMatchesPhase(phase);
+  } catch {
+    console.log(`(modules/weekend_leagues.js) Such phase doesn't exists!`);
   }
 }
 
 async function playWeekendLeagues_debug() {
   await createLeaguesNMatches();
-
-  await playMatches1Phase();
-  await calcMatches1Phase();
-
-  await playMatches2Phase();
-  await calcMatches2Phase();
-
-  await playMatches3Phase();
-  await calcMatches3Phase();
-
-  await playMatches4Phase();
-  await calcMatches4Phase();
-
-  await playMatches5Phase();
-  await calcMatches5Phase();
-
-  await playMatches6Phase();
-  await calcMatches6Phase();
-
-  await playMatches7Phase();
-  await calcMatches7Phase();
-
-  await playMatches8Phase();
-  await calcMatches8Phase();
-
-  await playMatches9Phase();
-  await calcMatches9Phase();
-
-  await playMatches10Phase();
-  await calcMatches10Phase();
+  for (let phase = 1; phase <= 10; phase++) {
+    await playMatchesPhase(phase);
+    await calcMatchesPhase(phase);
+  }
 }
 // weekend_league functions ==============================================================================================
 

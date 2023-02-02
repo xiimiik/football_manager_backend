@@ -37,4 +37,15 @@ WeekendTournamentApiRouter.get(
   WeekendTournamentController.getWeekendMatchesByPhase
 );
 
+WeekendTournamentApiRouter.get(
+  "/weekend_league/:id/leaderboard",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  WeekendTournamentController.getLeagueLeaderboard
+);
+
 module.exports = WeekendTournamentApiRouter;
