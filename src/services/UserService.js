@@ -171,6 +171,30 @@ class UserService {
     }
   }
 
+  //TODO: ПЕРЕНЕСТИ В КОМАНДУ А НЕ КАРТКУ
+  async updateUserPlayer(id, playerId, data) {
+    const user_players = await prisma.user_players.findUnique({
+      where: {
+        userId: id,
+      },
+      select: {
+        playersJson: true,
+      },
+    });
+
+    const playersJson = JSON.parse(user_players.playersJson);
+
+    const player = playersJson.find(player => player.playerId === playerId);
+
+    console.log(player);
+
+    try {
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async updateUserWaitingPlayers(id, waitingPlayersJson) {
     try {
       await prisma.user_players.upsert({
@@ -285,7 +309,51 @@ class UserService {
   }
 
   async getUserLastPlayedMatch(id) {
-    return await prisma.match.findFirst({
+    // return await prisma.match.findFirst({
+    //   where: {
+    //     OR: [{ player1Id: id }, { player2Id: id }],
+    //     AND: {
+    //       NOT: {
+    //         score: null,
+    //       },
+    //     },
+    //   },
+    //   orderBy: {
+    //     time: "desc",
+    //   },
+    //   take: 1,
+    // });
+
+    const match = await prisma.match.findFirst({
+      select: {
+        logs: true,
+        time: true,
+        leagueId: true,
+        player1: {
+          select: {
+            logo: true,
+            name: true,
+            avatarTb: true,
+            players: {
+              select: {
+                playersJson: true,
+              },
+            },
+          },
+        },
+        player2: {
+          select: {
+            logo: true,
+            name: true,
+            avatarTb: true,
+            players: {
+              select: {
+                playersJson: true,
+              },
+            },
+          },
+        },
+      },
       where: {
         OR: [{ player1Id: id }, { player2Id: id }],
         AND: {
@@ -299,6 +367,29 @@ class UserService {
       },
       take: 1,
     });
+
+    if (!match) {
+      return null;
+    }
+
+    const matchInfo = {
+      team1: {
+        logo: match.player1.logo,
+        name: match.player1.name,
+        avatar: match.player1.avatarTb.id,
+        teamComposition: match.player1.players.playersJson,
+      },
+      team2: {
+        logo: match.player2.logo,
+        name: match.player2.name,
+        avatar: match.player2.avatarTb.id,
+        teamComposition: match.player2.players.playersJson,
+      },
+      leagueId: match.leagueId,
+      matchLogs: match.logs,
+    };
+
+    return matchInfo;
   }
 }
 
