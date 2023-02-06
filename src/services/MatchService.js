@@ -196,8 +196,6 @@ class MathService {
       return null;
     }
 
-    console.log(match.player1.players);
-
     const matchInfo = {
       team1: {
         logo: match.player1.logo,
@@ -211,6 +209,7 @@ class MathService {
         avatar: match.player2.avatarTb.id,
         teamComposition: match.player2.players.playersJson,
       },
+      leagueId: match.leagueId,
       matchLogs: match.logs,
       matchStartTime: match.time,
       matchHasStarted: currentTime >= match.time,
