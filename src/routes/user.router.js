@@ -115,6 +115,17 @@ UserApiRouter.put(
 );
 
 UserApiRouter.put(
+  "/updateUserPlayer/:id",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.updatePlayer
+);
+
+UserApiRouter.put(
   "/updateWaitingPlayers/:id",
   [
     check("id")

@@ -171,24 +171,35 @@ class UserService {
     }
   }
 
-  //TODO: ПЕРЕНЕСТИ В КОМАНДУ А НЕ КАРТКУ
   async updateUserPlayer(id, playerId, data) {
-    const user_players = await prisma.user_players.findUnique({
-      where: {
-        userId: id,
-      },
-      select: {
-        playersJson: true,
-      },
-    });
-
-    const playersJson = JSON.parse(user_players.playersJson);
-
-    const player = playersJson.find(player => player.playerId === playerId);
-
-    console.log(player);
-
     try {
+      const user_players = await prisma.user.findUnique({
+        where: {
+          id,
+        },
+        select: {
+          lastTeam: true,
+        },
+      });
+
+      const playersJson = JSON.parse(user_players.lastTeam);
+      const playerIndex = playersJson.findIndex(player => player.playerId === playerId);
+
+      if (!playersJson || playerIndex < 0) {
+        return false;
+      }
+
+      playersJson[playerIndex] = data;
+
+      await prisma.user.update({
+        where: {
+          id,
+        },
+        data: {
+          lastTeam: JSON.stringify(playersJson),
+        }
+      })
+
       return true;
     } catch {
       return false;
