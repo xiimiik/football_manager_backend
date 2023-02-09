@@ -16,18 +16,25 @@ fs.createReadStream('./src/data/babynames-clean.csv')
     });
 
 function generateCard(id, isGoalKeeper, avatarId, predefinedSkills, leagueLevel) {
-    const pathToSprites = "CardAvatars",
-        heads = ['Face_1', 'Face_2', 'Face_3'],
-        bodies = ['Body_1', 'Body_2', 'Body_3'],
-        clothes = ['Kit_1', 'Kit_2', 'Kit_3', 'Kit_4', 'Kit_5', 'Kit_6', 'Kit_7', 'Kit_8', 'Kit_9', 'Kit_10', 'Kit_11', 'Kit_12', 'Kit_13', 'Kit_14', 'Kit_15', 'Kit_16', 'Kit_17'],
-        haircuts = ['Hair_1', 'Hair_2', 'Hair_3', 'Hair_4', 'Hair_5', 'Hair_6', 'Hair_7', 'Hair_8', 'Hair_9', 'Hair_10', 'Hair_11', 'Hair_12', 'Hair_13', 'Hair_14'];
+  const avatarLook = {
+    base: ["dark skin 1 black", "dark skin 1 blue", "dark skin 1 claret", "dark skin 1 green", "dark skin 1 red", "dark skin 1 sky", "dark skin 1 white", "dark skin 1 yellow", "dark skin 2 black", "dark skin 2 blue", "dark skin 2 claret", "dark skin 2 green", "dark skin 2 red", "dark skin 2 sky", "dark skin 2 white", "dark skin 2 yellow", "dark skin 3 black", "dark skin 3 blue", "dark skin 3 claret", "dark skin 3 green", "dark skin 3 red", "dark skin 3 sky", "dark skin 3 white", "dark skin 3 yellow", "light skin 1 black", "light skin 1 blue", "light skin 1 claret", "light skin 1 green", "light skin 1 red", "light skin 1 sky", "light skin 1 white", "light skin 1 yellow", "light skin 2 black", "light skin 2 blue", "light skin 2 claret", "light skin 2 green", "light skin 2 red", "light skin 2 sky", "light skin 2 white", "light skin 2 yellow", "light skin 3 black", "light skin 3 blue", "light skin 3 claret", "light skin 3 green", "light skin 3 red", "light skin 3 sky", "light skin 3 white", "light skin 3 yellow", "tanned skin 1 black", "tanned skin 1 blue", "tanned skin 1 claret", "tanned skin 1 green", "tanned skin 1 red", "tanned skin 1 sky", "tanned skin 1 white", "tanned skin 1 yellow", "tanned skin 2 black", "tanned skin 2 blue", "tanned skin 2 claret", "tanned skin 2 green", "tanned skin 2 red", "tanned skin 2 sky", "tanned skin 2 white", "tanned skin 2 yellow", "tanned skin 3 black", "tanned skin 3 blue", "tanned skin 3 claret", "tanned skin 3 green", "tanned skin 3 red", "tanned skin 3 sky", "tanned skin 3 white", "tanned skin 3 yellow"],
+    hair: ["blond 1", "blond 2", "blond 3", "blond 4", "blond 5", "blond 6", "brown 1", "brown 2", "brown 3", "brown 4", "brown 5", "brown 6", "brunette 1", "brunette 2", "brunette 3", "brunette 4", "brunette 5", "brunette 6", "red 1", "red 2", "red 3", "red 4", "red 5", "red 6"],
+    eyes: ["1 blue", "1 brown", "1 green", "2 blue", "2 brown", "2 green", "3 blue", "3 brown", "3 green"],
+    mouth: ["angry 1", "angry 2", "neutral", "smile 1", "smile 2"],
+    noses: ["1", "2"],
+    brows: ["1 angry blond", "1 angry brown", "1 angry brunette", "1 angry red", "1 happy blonde", "1 happy brown", "1 happy brunette", "1 happy red", "1 neutral blonde", "1 neutral brown", "1 neutral brunette", "1 neutral red", "2 angry blond", "2 angry brown", "2 angry brunette", "2 angry red", "2 happy blonde", "2 happy brown", "2 happy bunette", "2 happy red", "2 neutral blond", "2 neutral brown", "2 neutral brunette", "2 neutral red"]
+  };
 
-    function generateAvatar(card) {
-        card.head = pathToSprites + "/Faces/" + heads[MathService.randomInteger(0, heads.length - 1)];
-        card.body = pathToSprites + "/Bodies/" + bodies[MathService.randomInteger(0, bodies.length - 1)];
-        card.clothing = pathToSprites + "/Kits/" + clothes[MathService.randomInteger(0, clothes.length - 1)];
-        card.hair = pathToSprites + "/Hairs/" + haircuts[MathService.randomInteger(0, haircuts.length - 1)];
+  function generateAvatar(card) {
+    const avatar = [];
+
+    for (const key in avatarLook) {
+      const item = avatarLook[key];
+      avatar.push(item[MathService.randomInteger(0, item.length - 1)]);
     }
+
+    card.avatar = avatar.join(':');
+  }
 
     function generateSkills(card, isGoalKeeper, avatarId, predefinedSkills) {
         let pot = MathService.randomInteger(-1, 1), currAbi = MathService.randomInteger(-1, 1);
