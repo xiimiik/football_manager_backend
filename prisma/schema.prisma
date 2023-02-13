@@ -52,12 +52,14 @@ model User_players {
 }
 
 model Federated_credentials {
-  strategy      String  @db.VarChar(20)
   accountId     String  @db.VarChar(190)
   userId        Int
   user          User    @relation(fields: [userId], references: [id])
+  email         String?  @unique
+  password      String?
+  createdAt     DateTime @default(now())
 
-  @@id([strategy, accountId])
+  @@id([accountId])
 }
 
 model Avatar {
@@ -178,9 +180,6 @@ model Weekend_match {
     logs        String?
     time        DateTime
 }
-
-
-
 
 
 // tmp table
