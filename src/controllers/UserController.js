@@ -49,6 +49,30 @@ class UserController {
     }
   }
 
+  async getUserPlayer(req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        throw ApiError.BadRequest("Неверные данные!", {
+          errors: errors.errors,
+        });
+
+      const { userId, playerId } = req.params;
+
+      const player = await UserService.getUserPlayer(userId, playerId);
+      if (!player) throw ApiError.BadRequest(`Игрок #${userId} не был найден!`);
+
+      res.json({
+        message: `Футболист #${playerId} игрока #${userId}:`,
+        details: {
+          user,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
   async getLeagueMatches(req, res, next) {
     try {
       const errors = validationResult(req);

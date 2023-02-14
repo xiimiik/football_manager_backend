@@ -36,6 +36,26 @@ class UserService {
     });
   }
 
+  async getUserPlayer(userId, playerId) {
+    const user_players = await prisma.user_players.findUnique({
+      where: {
+        userId,
+      },
+      select: {
+        playersJson: true,
+      },
+    });
+
+    const playersJson = JSON.parse(user_players.playersJson);
+    const player = playersJson.find(player => player.playerId === playerId);
+
+    if (!playersJson || !player) {
+      return null;
+    }
+
+    return player;
+  }
+
   async getUserCurrentLeagueMatches(id) {
     const MatchResult = Object.freeze({
       NotOverYet: "Not Over Yet",
@@ -320,21 +340,6 @@ class UserService {
   }
 
   async getUserLastPlayedMatch(id) {
-    // return await prisma.match.findFirst({
-    //   where: {
-    //     OR: [{ player1Id: id }, { player2Id: id }],
-    //     AND: {
-    //       NOT: {
-    //         score: null,
-    //       },
-    //     },
-    //   },
-    //   orderBy: {
-    //     time: "desc",
-    //   },
-    //   take: 1,
-    // });
-
     const match = await prisma.match.findFirst({
       select: {
         logs: true,
