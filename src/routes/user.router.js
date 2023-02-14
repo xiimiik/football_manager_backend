@@ -27,6 +27,21 @@ UserApiRouter.get(
 );
 
 UserApiRouter.get(
+  "/getUserPlayer/:userId/:playerId",
+  [
+    check("userId")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+    check("playerId")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.getUserPlayer
+);
+
+UserApiRouter.get(
   "/leagueMatches/:id",
   [
     check("id")
