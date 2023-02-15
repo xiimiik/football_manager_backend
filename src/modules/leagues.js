@@ -419,14 +419,14 @@ async function scheduleMatchesInterval() {
         now.getMilliseconds(),
       msLeft = eightHoursInMs - msPassed - 1000 * 60 * 15;
 
-    setTimeout(() => {
-      setInterval(() => {
-        playMatches("current");
+    setTimeout(async () => {
+      setInterval(async () => {
+        await playMatches("current");
         clearTempPlayer();
         clearTempAction();
       }, eightHoursInMs);
 
-      playMatches("current");
+      await playMatches("current");
       clearTempPlayer();
       clearTempAction();
     }, msLeft);
