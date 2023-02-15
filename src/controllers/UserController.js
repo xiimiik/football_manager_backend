@@ -438,6 +438,50 @@ class UserController {
       next(e);
     }
   }
+
+  async getClubTalk(req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        throw ApiError.BadRequest("Неверные данные!", {
+          errors: errors.errors,
+        });
+      
+      const { id } = req.params;
+      const clubTalk = await UserService.getClubTalk(id);
+
+      res.json({
+        message: "User's club talk:",
+        details: {
+          place: clubTalk,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async setClubTalk(req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        throw ApiError.BadRequest("Неверные данные!", {
+          errors: errors.errors,
+        });
+
+        const { id } = req.params, { place } = req.body;
+        const isSeted = await UserService.setClubTalk(id, place);
+
+      res.json({
+        message: "User's club talk place seted:",
+        details: {
+          isSeted,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
 }
 
 module.exports = new UserController();

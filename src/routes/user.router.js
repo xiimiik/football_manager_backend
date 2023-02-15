@@ -240,4 +240,30 @@ UserApiRouter.get(
   UserController.getLastPlayedMatch
 );
 
+UserApiRouter.get(
+  "/:id/getClubTalk",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.getClubTalk
+);
+
+UserApiRouter.post(
+  "/:id/setClubTalk",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+    check("place")
+      .isInt()
+      .withMessage("Поле <botId> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.setClubTalk
+);
+
 module.exports = UserApiRouter;

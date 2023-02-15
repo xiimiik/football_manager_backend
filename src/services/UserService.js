@@ -407,6 +407,34 @@ class UserService {
 
     return matchInfo;
   }
+
+  async getClubTalk(id) {
+    return await prisma.user_players.findFirst({
+      select: {
+        clubTalk: true,
+      },
+      where: {
+        userId: id,
+      },
+    });
+  }
+
+  async setClubTalk(id, place) {
+    try {
+      await prisma.user_players.update({
+        where: {
+          userId: id,
+        },
+        data: {
+          clubTalk: place
+        }
+      });
+  
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 
 module.exports = new UserService();
