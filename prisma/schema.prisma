@@ -44,6 +44,7 @@ model User_players {
 
   playersJson           String?
   waitingPlayersJson    String?
+  clubTalk              String?
   tempPlayer            String?
   tempAction            String?
   tempDialogs           String?
