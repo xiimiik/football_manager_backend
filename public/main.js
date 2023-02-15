@@ -68,12 +68,14 @@ window.onload = function () {
                     break;
 
                 case 3:
-                    region = 'ME & Africa'
-                    break;
-
+                  region = 'Asia'
+                  break;
+                
                 case 4:
-                    region = 'Asia'
-                    break;
+                  region = 'ME & Africa'
+                  break;
+
+                
             }
 
             serverItem.className = 'servers__item ' + region;
