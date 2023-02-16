@@ -260,6 +260,48 @@ class UserController {
     }
   }
 
+  async releasePlayer(req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        throw ApiError.BadRequest("Неверные данные!", {
+          errors: errors.errors,
+        });
+
+      const { id, playerId } = req.params;
+
+      const isUpdated = await UserService.releasePlayer(id, playerId);
+      if (!isUpdated) throw ApiError.BadRequest(`Юзер #${id} не существует!`);
+
+      res.json({
+        message: `Футболист #${playerId} уволен с команды игрока #${id}!`,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async hirePlayer(req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        throw ApiError.BadRequest("Неверные данные!", {
+          errors: errors.errors,
+        });
+
+      const { id, waitingId } = req.params;
+
+      const isUpdated = await UserService.hirePlayer(id, waitingId);
+      if (!isUpdated) throw ApiError.BadRequest(`Юзер #${id} не существует!`);
+
+      res.json({
+        message: `Футболист #${waitingId} добавлен в команду игрока #${id}!`,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
   async updateTempPlayer(req, res, next) {
     try {
       const errors = validationResult(req);
@@ -446,7 +488,7 @@ class UserController {
         throw ApiError.BadRequest("Неверные данные!", {
           errors: errors.errors,
         });
-      
+
       const { id } = req.params;
       const clubTalk = await UserService.getClubTalk(id);
 
@@ -469,8 +511,9 @@ class UserController {
           errors: errors.errors,
         });
 
-        const { id } = req.params, { place } = req.body;
-        const isSeted = await UserService.setClubTalk(id, place);
+      const { id } = req.params,
+        { place } = req.body;
+      const isSeted = await UserService.setClubTalk(id, place);
 
       res.json({
         message: "User's club talk place seted:",

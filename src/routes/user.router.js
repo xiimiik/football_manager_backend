@@ -146,12 +146,39 @@ UserApiRouter.put(
     check("id")
       .isInt()
       .withMessage("Поле <id> должно быть типа integer!")
-      .toInt(),
-    check("waitingPlayersJson")
-      .isJSON()
-      .withMessage("Поле <waitingPlayersJson> должно быть в виде json!"),
+      .toInt()
   ],
   UserController.updateWaitingPlayers
+);
+
+UserApiRouter.put(
+  "/releasePlayer/:id/:playerId",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+    check("playerId")
+      .isInt()
+      .withMessage("Поле <playerId> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.releasePlayer
+);
+
+UserApiRouter.put(
+  "/hirePlayer/:id/:waitingId",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+    check("waitingId")
+      .isInt()
+      .withMessage("Поле <playerId> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.hirePlayer
 );
 
 UserApiRouter.put(

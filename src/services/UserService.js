@@ -227,14 +227,77 @@ class UserService {
   }
 
   async updateUserWaitingPlayers(id, waitingPlayersJson) {
+    console.log(waitingPlayersJson)
+
     try {
-      await prisma.user_players.upsert({
-        create: {
-          userId: id,
-          waitingPlayersJson,
+      await prisma.user_players.update({
+        data: {
+          waitingPlayersJson: JSON.stringify(waitingPlayersJson),
         },
-        update: {
-          waitingPlayersJson,
+        where: {
+          userId: id,
+        },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async releasePlayer(id, playerId) {
+    try {
+      const user_players = await prisma.user_players.findFirst({
+        where: {
+          userId: id
+        },
+      });
+  
+      const playersJson = JSON.parse(user_players.playersJson).filter(player => player.playerId !== playerId);
+
+      await prisma.user_players.update({
+        data: {
+          playersJson: JSON.stringify(playersJson),
+        },
+        where: {
+          userId: id,
+        },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async hirePlayer(id, waitingId) {
+    try {
+      const user_players = await prisma.user_players.findFirst({
+        where: {
+          userId: id
+        },
+      });
+      
+      const playersJson = JSON.parse(user_players.playersJson);
+      const waitingPlayersJson = JSON.parse(user_players.waitingPlayersJson);
+  
+      const largestPlayerId = playersJson.reduce((acc, cur) => {
+        return cur.playerId > acc ? cur.playerId : acc;
+      }, 0);
+  
+      const waitingPlayer = waitingPlayersJson.find(player => player.playerId === waitingId);
+      
+      if (largestPlayerId <= 0 || !waitingPlayer) {
+        return false;
+      }
+      
+      const filteredWaiting = waitingPlayersJson.filter(player => player.playerId !== waitingPlayer.playerId);
+
+      waitingPlayer.playerId = largestPlayerId + 1;
+      playersJson.push(waitingPlayer);
+
+      await prisma.user_players.update({
+        data: {
+          playersJson: JSON.stringify(playersJson),
+          waitingPlayersJson: JSON.stringify(filteredWaiting),
         },
         where: {
           userId: id,
