@@ -195,21 +195,14 @@ async function scheduleLeaguesInterval() {
     console.log(`Leagues created! (modules/leagues.js)`);
   }
 
-  let dataBuffer = await fileHandle.readFile("./src/data/variables.txt"),
-    data = JSON.parse(dataBuffer.toString("utf8")),
-    lastLeagueUpdateTimestamp = new Date(data.lastLeagueUpdateTimestamp),
-    now = new Date(),
-    twoWeeksMs = 1000 * 60 * 60 * 24 * 14;
+  const dataBuffer = await fileHandle.readFile("./src/data/variables.txt");
+  const data = JSON.parse(dataBuffer.toString("utf8"));
+  const lastLeagueUpdateTimestamp = new Date(data.lastLeagueUpdateTimestamp);
+  const now = new Date();
+  const twoWeeksMs = 1000 * 60 * 60 * 24 * 14;
 
   //обновление лиг (установка двухнедельных интервалов)
   if (now.getTime() < lastLeagueUpdateTimestamp.getTime() + twoWeeksMs) {
-    setTimeout(() => {
-      createLeagues();
-      setInterval(() => {
-        createLeagues();
-      }, twoWeeksMs);
-    }, twoWeeksMs - (now.getTime() - lastLeagueUpdateTimestamp.getTime()));
-
     console.log(
       `(modules/leagues.js) All's fine, next leagues update at ${new Date(
         lastLeagueUpdateTimestamp.getTime() + twoWeeksMs
@@ -218,14 +211,24 @@ async function scheduleLeaguesInterval() {
         (1000 * 60 * 60 * 24)
       }`
     );
-  } else {
-    setTimeout(() => {
-      setInterval(() => {
-        createLeagues();
+
+    setTimeout(async () => {
+      await createLeagues();
+
+      setInterval(async () => {
+        await createLeagues();
       }, twoWeeksMs);
-      createLeagues();
-    }, twoWeeksMs - (now.getTime() - (lastLeagueUpdateTimestamp.getTime() + twoWeeksMs)));
+    }, twoWeeksMs - (now.getTime() - lastLeagueUpdateTimestamp.getTime()));
+  } else {
     await createLeagues();
+
+    setTimeout(async () => {
+      await createLeagues();
+
+      setInterval(async () => {
+        await createLeagues();
+      }, twoWeeksMs);
+    }, twoWeeksMs - (now.getTime() - (lastLeagueUpdateTimestamp.getTime() + twoWeeksMs)));
 
     data.lastLeagueUpdateTimestamp = new Date(
       lastLeagueUpdateTimestamp.getTime() + twoWeeksMs
@@ -244,12 +247,12 @@ async function scheduleLeaguesInterval() {
 async function scheduleMatchesInterval() {
   async function playMatches(mode) {
     console.log(`Started playing ${mode} matches!`);
-
+    console.log(new Date());
     let where;
     switch (mode) {
       case "current":
         let datetime = new Date();
-        datetime.setHours(datetime.getHours() + 1, 0, 0, 0);
+        datetime.setUTCHours(datetime.getUTCHours() + 1, 0, 0, 0);
         where = {
           time: datetime,
           score: null,
@@ -341,6 +344,7 @@ async function scheduleMatchesInterval() {
           );
           queries.push(...newQueries);
         }
+        console.log("+++++++++++++++++++");
         await prisma.$transaction(queries);
       }
     } else {
@@ -390,6 +394,7 @@ async function scheduleMatchesInterval() {
     //   console.log(13, "==================");
     // }
     console.log(`Ended playing ${mode} matches (count: ${matchesCount})!`);
+    console.log(new Date());
   }
 
   async function clearTempPlayer() {
@@ -410,25 +415,26 @@ async function scheduleMatchesInterval() {
 
   try {
     //розыгрыш матчей (установка 8-часовых интервалов)
-    let now = new Date(),
-      eightHoursInMs = 1000 * 60 * 60 * 8,
-      msPassed =
-        1000 * 60 * 60 * (((now.getHours() % 8) + 5) % 8) +
-        1000 * 60 * now.getMinutes() +
-        1000 * now.getSeconds() +
-        now.getMilliseconds(),
-      msLeft = eightHoursInMs - msPassed - 1000 * 60 * 15;
+    const now = new Date();
+    const eightHoursInMs = 1000 * 60 * 60 * 8;
+    const currentHour = now.getUTCHours() % 8;
+    const msPassed =
+      1000 * 60 * 60 * ((currentHour) % 8) +
+      1000 * 60 * now.getMinutes() +
+      1000 * now.getSeconds() +
+      now.getMilliseconds();
+    const msLeft = eightHoursInMs - msPassed - 1000 * 60 * 15;
 
     setTimeout(async () => {
       setInterval(async () => {
         await playMatches("current");
-        clearTempPlayer();
-        clearTempAction();
+        await clearTempPlayer();
+        await clearTempAction();
       }, eightHoursInMs);
 
       await playMatches("current");
-      clearTempPlayer();
-      clearTempAction();
+      await clearTempPlayer();
+      await clearTempAction();
     }, msLeft);
 
     await playMatches("late"); // разыгровка матчей (если некоторые были во время того, как сервак лежал)
