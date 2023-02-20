@@ -42,24 +42,66 @@ class AuthController {
         }
     }
 
+    async getBotByCountry(req, res, next) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
+
+            const { regionId, countryId } = req.body
+            const {id: botId} = await AuthService.getBotByCountry(regionId, countryId);
+            
+            res.json({
+                message: `ID бота по из страны #${countryId}:`,
+                details: {
+                    userId: botId
+                },
+            });
+        }
+        catch (e) {
+            next(e);
+        }
+    }
+
     async linkupUserProfile(req, res, next) {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
 
-            const {id} = req.body.user, {strategy, accountId} = req.body.linkup;
-            const existingAccount = await AuthService.getUserProfileByAccountId(strategy, accountId);
+            const { email, password, accountId, countryId } = req.body
+            const existingAccount = await AuthService.getUserProfileByAccountId(accountId);
 
             if (existingAccount) {
-                if (existingAccount.userId === id) throw ApiError.BadRequest(`Игровой профиль #${id} уже привязан к аккаунту #${strategy}!`);
-                throw ApiError.BadRequest(`К аккаунту #${strategy} уже привязан другой игровой профиль!`)
+                if (existingAccount.userId === accountId) throw ApiError.BadRequest(`Игровой профиль #${accountId} уже привязан!`);
+                throw ApiError.BadRequest(`К аккаунту #${accountId} уже привязан другой игровой профиль!`)
             }
 
-            const isUpdated = await AuthService.linkupUserProfile(id, strategy, accountId);
-            if (!isUpdated) throw ApiError.BadRequest(`Юзер #${id} не существует!`);
+            const isUpdated = await AuthService.linkupUserProfile(email, password, accountId, countryId);
+            if (!isUpdated) throw ApiError.BadRequest(`Юзер #${accountId} не существует!`);
 
             res.json({
-                message: `Игровой профиль #${id} успешно привязан к аккаунту ${strategy + ' #' + accountId}!`
+                message: `Игровой профиль #${accountId} успешно привязан к аккаунту!`
+            });
+        }
+        catch (e) {
+            next(e);
+        }
+    }
+
+    async login(req, res, next) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
+
+            const { email, password } = req.body
+
+            const isLogined = await AuthService.login(email, password);
+            if (!isLogined) throw ApiError.BadRequest(`Юзер не существует!`);
+
+            res.json({
+                message: `Вход успешно выполнен`,
+                data: {
+                  isLogined
+                }
             });
         }
         catch (e) {
