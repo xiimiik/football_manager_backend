@@ -29,21 +29,19 @@ AuthApiRouter.get(
 );
 
 AuthApiRouter.post(
-  "/linkup",
-  [
-    check("user.id")
-      .isInt()
-      .withMessage("Поле <user.id> должно быть типа integer!")
-      .toInt(),
-    check("linkup").custom((linkup) => {
-      if (typeof linkup.strategy !== "string")
-        throw new Error("Поле <linkup.strategy> должно быть типа string!");
-      if (typeof linkup.accountId !== "string")
-        throw new Error("Поле <linkup.accountId> должно быть типа string!");
-      return true;
-    }),
-  ],
+  "/getBotByCountry",
+  [],
+  AuthController.getBotByCountry
+);
+
+AuthApiRouter.post(
+  "/linkup",[],
   AuthController.linkupUserProfile
+);
+
+AuthApiRouter.post(
+  "/login",[],
+  AuthController.login
 );
 
 AuthApiRouter.post(
