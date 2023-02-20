@@ -295,6 +295,87 @@ class ServerService {
         },
       });
 
+      const dataBuffer = await fileHandle.readFile("./src/data/variables.txt");
+      const data = JSON.parse(dataBuffer.toString("utf8"));
+      const lastLeagueUpdateTimestamp = new Date(data.lastLeagueUpdateTimestamp);
+
+      const allLeagues = await prisma.league.findMany({
+        select: {
+          id: true,
+          leaguePlayers: {
+            select: {
+              playerId: true,
+            },
+          },
+        },
+        where: {
+          server_id: server.id,
+        },
+      });
+      const processedMatchesObjects = [];
+
+      lastLeagueUpdateTimestamp.setUTCDate(
+        lastLeagueUpdateTimestamp.getUTCDate() - 14
+      );
+
+      for (const currLeague of allLeagues) {
+        const { leaguePlayers } = currLeague;
+
+        function roundedArrStep(arr) {
+          const [a0, a1, a2, a3, a4, a5, a6, a7] = arr[0];
+          const [b0, b1, b2, b3, b4, b5, b6, b7] = arr[1];
+        
+          arr[0] = [b7, a0, a1, a2, a3, a4, a5, a6];
+          arr[1] = [b6, b5, b4, b3, b2, b1, b0, a7];
+        }
+        
+        const halfLength = leaguePlayers.length / 2;
+        const firstTeams = leaguePlayers.slice(0, halfLength).map((p) => p.playerId);
+        const secondTeams = leaguePlayers.slice(halfLength).map((p) => p.playerId);
+
+        const allPlayersArr1 = [firstTeams, secondTeams],
+          allPlayersArr2 = [[...secondTeams], [...firstTeams]],
+          utcHours = [0, 8, 16];
+
+        for (let i = 0; i < 5; i++) {
+          for (let j = 0; j < 3; j++) {
+            let resultTimeWeek1 = new Date(lastLeagueUpdateTimestamp),
+              resultTimeWeek2 = new Date(lastLeagueUpdateTimestamp);
+
+            resultTimeWeek1.setUTCDate(
+              lastLeagueUpdateTimestamp.getUTCDate() + 15 + i
+            );
+            resultTimeWeek1.setUTCHours(utcHours[j], 0, 0, 0);
+            resultTimeWeek2.setUTCDate(
+              lastLeagueUpdateTimestamp.getUTCDate() + 22 + i
+            );
+            resultTimeWeek2.setUTCHours(utcHours[j], 0, 0, 0);
+
+            for (let k = 0; k < 8; k++) {
+              processedMatchesObjects.push({
+                player1Id: allPlayersArr1[0][k],
+                player2Id: allPlayersArr1[1][k],
+                leagueId: currLeague.id,
+                time: resultTimeWeek1,
+              });
+              processedMatchesObjects.push({
+                player1Id: allPlayersArr2[0][k],
+                player2Id: allPlayersArr2[1][k],
+                leagueId: currLeague.id,
+                time: resultTimeWeek2,
+              });
+            }
+
+            roundedArrStep(allPlayersArr1);
+            roundedArrStep(allPlayersArr2);
+          }
+        }
+      }
+
+      await prisma.match.createMany({
+        data: processedMatchesObjects,
+      });
+
       return server;
     } catch {
       return null;

@@ -227,8 +227,6 @@ class UserService {
   }
 
   async updateUserWaitingPlayers(id, waitingPlayersJson) {
-    console.log(waitingPlayersJson)
-
     try {
       await prisma.user_players.update({
         data: {

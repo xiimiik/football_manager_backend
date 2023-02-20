@@ -1,4 +1,6 @@
+const bcrypt = require("bcryptjs");
 const { prisma } = require("../../prisma-client");
+const ServerService = require("./ServerService");
 
 class AuthService {
   async swapUserWithBot(botId) {
@@ -17,36 +19,122 @@ class AuthService {
     }
   }
 
-  async getUserProfileByAccountId(strategy, accountId) {
+  async getUserProfileByAccountId(accountId) {
     return prisma.federated_credentials.findFirst({
       where: {
-        strategy,
         accountId,
       },
     });
   }
 
-  async linkupUserProfile(id, strategy, accountId) {
+  async getBotByCountry(regionId, countryId) {
+    const botId = await prisma.user.findFirst({
+      where: {
+        AND: [
+          {
+            leaguePlayers: {
+              some: {
+                league: {
+                  country_id: countryId,
+                },
+              },
+            },
+          },
+          {
+            isBot: true,
+          },
+        ],
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!userId) {
+      await ServerService.generateServer(regionId);
+      return await prisma.user.findFirst({
+        where: {
+          AND: [
+            {
+              leaguePlayers: {
+                some: {
+                  league: {
+                    country_id: countryId,
+                  },
+                },
+              },
+            },
+            {
+              isBot: true,
+            },
+          ],
+        },
+        select: {
+          id: true,
+        },
+      });
+    } else {
+      return botId;
+    }
+  }
+
+  async linkupUserProfile(email, password, accountId, botId) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     try {
       await prisma.$transaction([
         prisma.federated_credentials.deleteMany({
           where: {
-            strategy,
-            userId: id,
+            userId: botId,
           },
         }),
         prisma.federated_credentials.create({
           data: {
-            strategy,
             accountId,
-            userId: id,
+            userId: botId,
+            email,
+            password: hashedPassword,
+          },
+        }),
+        prisma.user.update({
+          where: {
+            id: botId,
+          },
+          data: {
+            isBot: false,
           },
         }),
       ]);
-      return true;
+      return botId;
     } catch {
       return false;
     }
+  }
+
+  async login(email, password) {
+    const user = prisma.federated_credentials.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    return user.userId;
   }
 
   async reloadUserProfile(id, strategy, accountId) {

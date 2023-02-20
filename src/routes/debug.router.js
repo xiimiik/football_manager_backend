@@ -269,7 +269,7 @@ DebugApiRouter.post("/play_phase_weekend_matches", async (req, res, next) => {
   try {
     let phase = req.body.phase;
 
-    if (!Number.isInteger(phase) || phase < 1 || phase > 10)
+    if (!Number.isInteger(phase) || phase < 1 || phase > 7)
       throw ApiError.BadRequest("Such phase doesn't exists!");
 
     await playPhaseMatches_debug(phase);

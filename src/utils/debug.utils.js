@@ -19,14 +19,15 @@ async function playPhaseMatches_debug(phase) {
   try {
     await playMatchesPhase(phase);
     await calcMatchesPhase(phase);
-  } catch {
+  } catch(e) {
+    console.log(e)
     console.log(`(modules/weekend_leagues.js) Such phase doesn't exists!`);
   }
 }
 
 async function playWeekendLeagues_debug() {
   await createLeaguesNMatches();
-  for (let phase = 1; phase <= 10; phase++) {
+  for (let phase = 1; phase <= 7; phase++) {
     await playMatchesPhase(phase);
     await calcMatchesPhase(phase);
   }
