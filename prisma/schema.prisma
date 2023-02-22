@@ -34,7 +34,10 @@ model User {
 
     weekendTeams1          Weekend_match[]          @relation("weekend_teams1")
     weekendTeams2          Weekend_match[]          @relation("weekend_teams2")
+    weekendTeams1_next_level          Weekend_match_next_level[]          @relation("weekend_teams1_next_level")
+    weekendTeams2_next_level          Weekend_match_next_level[]          @relation("weekend_teams2_next_level")
     weekendLeaguePlayers   Weekend_league_players[]
+    weekendLeaguePlayers_next_level   Weekend_league_players_next_level[]
 }
 
 //карточки игроков============
@@ -136,6 +139,7 @@ model Country {
 
     leagues             League[]
     weekendLeagues      Weekend_league[]
+    weekendLeagues_next_level      Weekend_league_next_level[]
 }
 
 model Game_server {
@@ -145,6 +149,7 @@ model Game_server {
 
     leagues         League[]
     weekendLeagues  Weekend_league[]
+    weekendLeagues_next_level  Weekend_league_next_level[]
 }
 
 model Weekend_league {
@@ -178,6 +183,41 @@ model Weekend_match {
     score       String?         @db.VarChar(5)
     leagueId    Int
     league      Weekend_league  @relation(fields: [leagueId], references: [id])
+    logs        String?
+    time        DateTime
+}
+
+model Weekend_league_next_level {
+    id                      Int                 @id @default(autoincrement())
+    isFull                  Boolean
+    server_id               Int
+    server                  Game_server         @relation(fields: [server_id], references: [id])
+    country_id              Int?
+    country                 Country?             @relation(fields: [country_id], references: [id])
+    level                   Int
+
+    weekendLeagueMatches    Weekend_match_next_level[]
+    weekendLeaguePlayers    Weekend_league_players_next_level[]
+}
+
+model Weekend_league_players_next_level {
+    leagueId    Int
+    league      Weekend_league_next_level  @relation(fields: [leagueId], references: [id])
+    playerId    Int
+    player      User            @relation(fields: [playerId], references: [id])
+
+    @@id([leagueId, playerId])
+}
+
+model Weekend_match_next_level {
+    id          Int             @id @default(autoincrement())
+    user1_id    Int
+    user1       User            @relation("weekend_teams1_next_level", fields: [user1_id], references: [id])
+    user2_id    Int
+    user2       User            @relation("weekend_teams2_next_level", fields: [user2_id], references: [id])
+    score       String?         @db.VarChar(5)
+    leagueId    Int
+    league      Weekend_league_next_level  @relation(fields: [leagueId], references: [id])
     logs        String?
     time        DateTime
 }
