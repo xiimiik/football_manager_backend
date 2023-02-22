@@ -1,4 +1,5 @@
 const { prisma } = require("../../prisma-client");
+const { calculatePlayersTotalAsm_v2 } = require("../utils/debug.utils");
 
 class MathService {
   async setMatchTeam(userId, teamJson) {
@@ -141,6 +142,8 @@ class MathService {
     let matchPlayTime = new Date(
       new Date().setHours(currentTime.getHours() + 2)
     );
+    let avatarAdv = null;
+    let squadAdv = null;
 
     const match = await prisma.match.findFirst({
       select: {
@@ -149,26 +152,20 @@ class MathService {
         leagueId: true,
         player1: {
           select: {
+            id: true,
             logo: true,
             name: true,
             avatarTb: true,
-            players: {
-              select: {
-                playersJson: true,
-              },
-            },
+            lastTeam: true,
           },
         },
         player2: {
           select: {
+            id: true,
             logo: true,
             name: true,
             avatarTb: true,
-            players: {
-              select: {
-                playersJson: true,
-              },
-            },
+            lastTeam: true,
           },
         },
       },
@@ -196,23 +193,63 @@ class MathService {
       return null;
     }
 
+    const { defeated_id } = await prisma.avatar_defying.findFirst({
+      where: {
+        OR: [
+          {
+            avatar_id: match.player1.avatarTb.id,
+            defeated_id: match.player2.avatarTb.id,
+          },
+          {
+            avatar_id: match.player2.avatarTb.id,
+            defeated_id: match.player2.avatarTb.id,
+          },
+        ],
+      }
+    }) || [];
+
+    if (defeated_id) {
+      if (defeated_id === match.player1.avatarTb.id) {
+        avatarAdv = match.player1.avatarTb.id;
+      }
+      if (defeated_id === match.player2.avatarTb.id) {
+        avatarAdv = match.player2.avatarTb.id;
+      }
+    }
+    let asmPl1 = calculatePlayersTotalAsm_v2(JSON.parse(match.player1.lastTeam));
+    let asmPl2 = calculatePlayersTotalAsm_v2(JSON.parse(match.player2.lastTeam));
+
+    if (Math.abs(asmPl1) - Math.abs(asmPl2) >= 8) {
+      if (asmPl1 > asmPl2) {
+        squadAdv = match.player1.id
+      }
+      if (asmPl1 < asmPl2) {
+        squadAdv = match.player2.id
+      }
+    }
+
     const matchInfo = {
       team1: {
         logo: match.player1.logo,
         name: match.player1.name,
         avatar: match.player1.avatarTb.id,
-        teamComposition: match.player1.players.playersJson,
+        teamComposition: match.player1.lastTeam,
       },
       team2: {
         logo: match.player2.logo,
         name: match.player2.name,
         avatar: match.player2.avatarTb.id,
-        teamComposition: match.player2.players.playersJson,
+        teamComposition: match.player2.lastTeam,
       },
       leagueId: match.leagueId,
       matchLogs: match.logs,
       matchStartTime: match.time,
       matchHasStarted: currentTime >= match.time,
+      prematchScreen: {
+        homeBonus: match.player1.id,
+        avatarAdv,
+        squadAdv,
+      }
     };
 
     return matchInfo;

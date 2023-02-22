@@ -50640,7 +50640,77 @@ function calculatePlayersTotalAsm(players) {
   }
 
   return T;
-} //players total asm with positions bonuses
+} 
+//players total asm with positions bonuses
+
+function calculatePlayersTotalAsm_v2(players) {
+  let T = 0;
+  for (let plIdx = 0; plIdx < players.length; plIdx++) {
+    let player = players[plIdx];
+
+    let technicalSkills = {},
+      physicalSkills = {};
+
+    for (let skill in player.physicalSkills)
+      physicalSkills[skill] = player.physicalSkills[skill];
+    for (let skill in player.technicalSkills)
+      technicalSkills[skill] = player.technicalSkills[skill];
+
+    switch (player.position) {
+      case "FW":
+        technicalSkills.shoot *= 3;
+        physicalSkills.pace *= 3;
+        physicalSkills.agility *= 3;
+        physicalSkills.jump *= 3;
+        break;
+
+      case "WG":
+        technicalSkills.cross *= 3;
+        technicalSkills.shoot *= 3;
+        physicalSkills.pace *= 3;
+        physicalSkills.agility *= 3;
+        break;
+
+      case "CM":
+        technicalSkills.pass *= 3;
+        physicalSkills.agility *= 3;
+        physicalSkills.strength *= 3;
+        break;
+
+      case "CD":
+        technicalSkills.tackling *= 3;
+        physicalSkills.strength *= 3;
+        physicalSkills.jump *= 3;
+        break;
+
+      case "WB":
+        technicalSkills.cross *= 3;
+        physicalSkills.pace *= 3;
+        physicalSkills.jump *= 3;
+        break;
+    }
+
+    //получение asm игрока
+    let phy = 0,
+      te = 0,
+      asm;
+
+    for (let skill in physicalSkills) phy += physicalSkills[skill];
+    for (let skill in technicalSkills) te += technicalSkills[skill];
+
+    phy = Math.min(Math.max(1, phy), 5);
+    te = Math.min(Math.max(1, te), 5);
+
+    asm = phy + te + player.mood;
+    asm = Math.min(Math.max(1, asm), 10);
+
+    if (asm % 1 !== 0) asm += 0.5 * (player.mood < 0 ? -1 : 1);
+
+    T += asm;
+  }
+
+  return T;
+}
 // another ======================================================================================================
 
 module.exports = {
@@ -50664,4 +50734,5 @@ module.exports = {
   playDebugMatch_17otr_v3_09I19,
   playPhaseMatches_debug,
   playWeekendLeagues_debug,
+  calculatePlayersTotalAsm_v2,
 };
