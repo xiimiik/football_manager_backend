@@ -138,13 +138,9 @@ class MathService {
   }
 
   async getCurrentMatch(userId) {
-    let currentTime = new Date();
-    let matchPlayTime = new Date(
-      new Date().setHours(currentTime.getHours() + 2)
-    );
-    let avatarAdv = null;
-    let squadAdv = null;
-
+    const currentTime = new Date();
+    const matchPlayTime = new Date(currentTime.getTime() + 2 * 60 * 60 * 1000);
+  
     const match = await prisma.match.findFirst({
       select: {
         logs: true,
@@ -155,7 +151,7 @@ class MathService {
             id: true,
             logo: true,
             name: true,
-            avatarTb: true,
+            avatarTb: { select: { id: true } },
             lastTeam: true,
           },
         },
@@ -164,7 +160,7 @@ class MathService {
             id: true,
             logo: true,
             name: true,
-            avatarTb: true,
+            avatarTb: { select: { id: true } },
             lastTeam: true,
           },
         },
@@ -188,12 +184,12 @@ class MathService {
       },
       take: 1,
     });
-
+  
     if (!match) {
       return null;
     }
-
-    const { defeated_id } = await prisma.avatar_defying.findFirst({
+  
+    const avatarDefying = await prisma.avatar_defying.findFirst({
       where: {
         OR: [
           {
@@ -202,40 +198,34 @@ class MathService {
           },
           {
             avatar_id: match.player2.avatarTb.id,
-            defeated_id: match.player2.avatarTb.id,
+            defeated_id: match.player1.avatarTb.id,
           },
         ],
-      }
-    }) || [];
-
-    if (defeated_id) {
-      if (defeated_id === match.player1.avatarTb.id) {
-        avatarAdv = match.player1.avatarTb.id;
-      }
-      if (defeated_id === match.player2.avatarTb.id) {
-        avatarAdv = match.player2.avatarTb.id;
-      }
-    }
-    let asmPl1 = calculatePlayersTotalAsm_v2(JSON.parse(match.player1.lastTeam));
-    let asmPl2 = calculatePlayersTotalAsm_v2(JSON.parse(match.player2.lastTeam));
-
-    if (Math.abs(asmPl1) - Math.abs(asmPl2) >= 8) {
-      if (asmPl1 > asmPl2) {
-        squadAdv = match.player1.id
-      }
-      if (asmPl1 < asmPl2) {
-        squadAdv = match.player2.id
-      }
-    }
-
+      },
+      select: { defeated_id: true },
+    });
+  
+    const avatarAdv = avatarDefying?.defeated_id === match.player1.avatarTb.id ? match.player1.avatarTb.id
+      : avatarDefying?.defeated_id === match.player2.avatarTb.id ? match.player2.avatarTb.id
+      : null;
+  
+    const squadAdv =
+    Math.abs(calculatePlayersTotalAsm_v2(JSON.parse(match.player1.lastTeam))) - Math.abs(calculatePlayersTotalAsm_v2(JSON.parse(match.player2.lastTeam))) >= 8
+      ? (calculatePlayersTotalAsm_v2(JSON.parse(match.player1.lastTeam)) > calculatePlayersTotalAsm_v2(JSON.parse(match.player2.lastTeam)) ? match.player1.id
+        : calculatePlayersTotalAsm_v2(JSON.parse(match.player1.lastTeam)) < calculatePlayersTotalAsm_v2(JSON.parse(match.player2.lastTeam)) ? match.player2.id
+        : null)
+      : null;
+    
     const matchInfo = {
       team1: {
+        id: match.player2.id,
         logo: match.player1.logo,
         name: match.player1.name,
         avatar: match.player1.avatarTb.id,
         teamComposition: match.player1.lastTeam,
       },
       team2: {
+        id: match.player1.id,
         logo: match.player2.logo,
         name: match.player2.name,
         avatar: match.player2.avatarTb.id,
@@ -251,9 +241,10 @@ class MathService {
         squadAdv,
       }
     };
-
+  
     return matchInfo;
   }
+  
 }
 
 module.exports = new MathService();
