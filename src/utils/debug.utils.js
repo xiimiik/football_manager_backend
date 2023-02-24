@@ -346,7 +346,7 @@ async function playDebugMatch_17otr_v3_09I19(matchId, saveToDB) {
   const user1resultLastTeam = JSON.parse(match.player1.lastTeam);
   const user2resultLastTeam = JSON.parse(match.player2.lastTeam);
   const user1resultAllPlayers = JSON.parse(match.player1.players.playersJson);
-  const user2resultAllPlayers = JSON.parse(match.player1.players.playersJson);
+  const user2resultAllPlayers = JSON.parse(match.player2.players.playersJson);
 
   if (user1resultLastTeam.length !== 11) {
     const maxPlayerId = user1resultAllPlayers.reduce((max, player) => {
