@@ -253,6 +253,15 @@ class UserService {
         },
       });
 
+      const lastTeam = await prisma.user.findFirst({
+        where: {
+          id,
+        },
+        select: {
+          lastTeam: true,
+        }
+      });
+
       const playersJson = JSON.parse(user_players.playersJson).filter(
         (player) => player.playerId !== playerId
       );
@@ -265,6 +274,21 @@ class UserService {
           userId: id,
         },
       });
+
+      if (JSON.parse(lastTeam.lastTeam).some(player => player.playerId === playerId)) {
+        const lastTeamJson = JSON.parse(lastTeam.lastTeam).filter(
+          (player) => player.playerId !== playerId
+        );
+        
+        await prisma.user.update({
+          data: {
+            lastTeam: JSON.stringify(lastTeamJson),
+          },
+          where: {
+            id,
+          },
+        });
+      }
       return true;
     } catch {
       return false;

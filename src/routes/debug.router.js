@@ -243,6 +243,9 @@ DebugApiRouter.get("/clear_weekend_tables", async (req, res, next) => {
       prisma.weekend_match.deleteMany({}),
       prisma.weekend_league_players.deleteMany({}),
       prisma.weekend_league.deleteMany({}),
+      prisma.weekend_match_next_level.deleteMany({}),
+      prisma.weekend_league_players_next_level.deleteMany({}),
+      prisma.weekend_league_next_level.deleteMany({}),
     ]);
 
     res.json({

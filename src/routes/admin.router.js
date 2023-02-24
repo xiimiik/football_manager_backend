@@ -5,7 +5,7 @@ const { google } = require("googleapis");
 const { prisma, Prisma } = require("../../prisma-client");
 const ApiError = require("../exceptions/api-error");
 const { avatarDefying } = require("../data/avatars");
-const { generateStartCardsSet } = require("../modules/players");
+const { generateStartCardsSet, generateCard } = require("../modules/players");
 const {
   playMatchManyTimes_vc,
   playMatchManyTimes_v_12_08_2022,
@@ -184,11 +184,44 @@ AdminApiRouter.get("/usersIds", async (req, res) => {
     }),
     users = [];
 
+  const positions = [
+    "FW:0",
+    "WG:0",
+    "WG:1",
+    "CM:0",
+    "CM:1",
+    "CM:2",
+    "WB:0",
+    "WB:1",
+    "CD:0",
+    "CD:1",
+    "GK:0",
+  ];
+
   usersRows.forEach((userRow) => {
+    const userResultLastTeam = JSON.parse(userRow.lastTeam);
+    const userResultAllPlayers = JSON.parse(userRow.players.playersJson);
+
+    if (userResultLastTeam.length !== 11) {
+      const maxPlayerId = userResultAllPlayers.reduce((max, player) => {
+        return player.playerId > max ? player.playerId : max;
+      }, 0);
+
+      positions.forEach((position) => {
+        if (
+          !userResultLastTeam.some((player) => player.position === position)
+        ) {
+          const newPlayer = generateCard(maxPlayerId, position);
+          newPlayer.position = position;
+          userResultLastTeam.push(newPlayer);
+        }
+      });
+    }
+
     let user = {
       id: userRow.id,
-      lastTeam: JSON.parse(userRow.lastTeam),
-      allPlayers: JSON.parse(userRow.players.playersJson),
+      lastTeam: userResultLastTeam,
+      allPlayers: userResultAllPlayers,
       players: [],
     };
     user.players = composePlayersArray(user.lastTeam, user.allPlayers);

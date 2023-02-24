@@ -341,22 +341,58 @@ async function playDebugMatch_17otr_v3_09I19(matchId, saveToDB) {
     },
   });
 
+  const positions = ["FW:0", "WG:0", "WG:1", "CM:0", "CM:1", "CM:2", "WB:0", "WB:1", "CD:0", "CD:1", "GK:0"];
+
+  const user1resultLastTeam = JSON.parse(match.player1.lastTeam);
+  const user2resultLastTeam = JSON.parse(match.player2.lastTeam);
+  const user1resultAllPlayers = JSON.parse(match.player1.players.playersJson);
+  const user2resultAllPlayers = JSON.parse(match.player1.players.playersJson);
+
+  if (user1resultLastTeam.length !== 11) {
+    const maxPlayerId = user1resultAllPlayers.reduce((max, player) => {
+      return player.playerId > max ? player.playerId : max;
+    }, 0);
+
+    positions.forEach((position) => {
+      if (!user1resultLastTeam.some((player) => player.position === position)) {
+        const newPlayer = generateCard(maxPlayerId, position);
+        newPlayer.position = position;
+        user1resultLastTeam.push(newPlayer);
+      }
+    });
+  }
+
+  if (user2resultLastTeam.length !== 11) {
+
+    const maxPlayerId = user2resultAllPlayers.reduce((max, player) => {
+      return player.playerId > max ? player.playerId : max;
+    }, 0);
+
+    positions.forEach((position) => {
+      if (!user2resultLastTeam.some((player) => player.position === position)) {
+        const newPlayer = generateCard(maxPlayerId, position);
+        newPlayer.position = position;
+        user2resultLastTeam.push(newPlayer);
+      }
+    });
+  }
+
   let matchLogs = [],
     user1 = {
       id: match.player1.id,
       avatar: match.player1.avatar,
       tactic: JSON.parse(match.player1.lastTactic),
       players: [],
-      resultLastTeam: JSON.parse(match.player1.lastTeam),
-      resultAllPlayers: JSON.parse(match.player1.players.playersJson),
+      resultLastTeam: user1resultLastTeam,
+      resultAllPlayers: user1resultAllPlayers,
     },
     user2 = {
       id: match.player2.id,
       avatar: match.player2.avatar,
       tactic: JSON.parse(match.player2.lastTactic),
       players: [],
-      resultLastTeam: JSON.parse(match.player2.lastTeam),
-      resultAllPlayers: JSON.parse(match.player2.players.playersJson),
+      resultLastTeam: user2resultLastTeam,
+      resultAllPlayers: user2resultAllPlayers,
     },
     playersOnPositions = [
       {
