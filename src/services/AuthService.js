@@ -50,9 +50,9 @@ class AuthService {
       },
     });
 
-    if (!userId) {
+    if (!botId) {
       await ServerService.generateServer(regionId);
-      return await prisma.user.findFirst({
+      const userId = await prisma.user.findFirst({
         where: {
           AND: [
             {
@@ -73,6 +73,17 @@ class AuthService {
           id: true,
         },
       });
+
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          isBot: false,
+        }
+      })
+
+      return userId;
     } else {
       return botId;
     }
