@@ -281,10 +281,6 @@ async function scheduleMatchesInterval() {
         return;
     }
 
-    // for (let i = 0; i < 30; i++) {
-    //   console.log(11, "==================");
-    // }
-
     // делим на чанки, потому что вылазит ошибка от призмы из-за одного запроса на большое количество данных ================
     const chunkLength = 400;
     const matchesCount = await prisma.match.count({
@@ -293,90 +289,36 @@ async function scheduleMatchesInterval() {
 
     if (matchesCount > chunkLength) {
       for (let i = 0; i < Math.floor(matchesCount / chunkLength) + 1; i++) {
-        let skip = i * chunkLength,
-          take =
-            matchesCount - i * chunkLength >= chunkLength
-              ? chunkLength
-              : matchesCount - i * chunkLength,
-          chunkOfMatches = await prisma.match.findMany({
-            select: {
-              id: true,
-              player1: {
-                select: {
-                  id: true,
-                  avatar: true,
-                  lastTactic: true,
-                  lastTeam: true,
-                  players: {
-                    select: {
-                      playersJson: true,
-                    },
-                  },
-                },
-              },
-              player2: {
-                select: {
-                  id: true,
-                  avatar: true,
-                  lastTactic: true,
-                  lastTeam: true,
-                  players: {
-                    select: {
-                      playersJson: true,
-                    },
-                  },
-                },
-              },
-            },
-            where,
-            skip,
-            take,
-            orderBy: {
-              id: "asc",
-            },
-          });
+        const skip = i * chunkLength;
+        const take = Math.min(chunkLength, matchesCount - skip);
+        const chunkOfMatches = await prisma.match.findMany({
+          select: {
+            id: true,
+          },
+          where,
+          skip,
+          take,
+          orderBy: {
+            id: "asc",
+          },
+        });
 
         const queries = [];
         for (const match of chunkOfMatches) {
-          const newQueries = await playDebugMatch_17otr_v3_09I19(
-            match.id,
-            true
-          );
+          const newQueries = await playDebugMatch_17otr_v3_09I19(match.id, true);
           queries.push(...newQueries);
         }
-        console.log("+++++++++++++++++++");
-        await prisma.$transaction(queries);
+      
+        try {
+          await prisma.$transaction(queries);
+        } catch (e) {
+          console.log(`Error executing transaction: ${e}`);
+        }
       }
     } else {
-      let matches = await prisma.match.findMany({
+      const matches = await prisma.match.findMany({
         select: {
           id: true,
-          player1: {
-            select: {
-              id: true,
-              avatar: true,
-              lastTactic: true,
-              lastTeam: true,
-              players: {
-                select: {
-                  playersJson: true,
-                },
-              },
-            },
-          },
-          player2: {
-            select: {
-              id: true,
-              avatar: true,
-              lastTactic: true,
-              lastTeam: true,
-              players: {
-                select: {
-                  playersJson: true,
-                },
-              },
-            },
-          },
         },
         where,
       });
@@ -386,13 +328,15 @@ async function scheduleMatchesInterval() {
         const newQueries = await playDebugMatch_17otr_v3_09I19(match.id, true);
         queries.push(...newQueries);
       }
-      await prisma.$transaction(queries);
+
+      try {
+        await prisma.$transaction(queries);
+      } catch (e) {
+        console.log(`Error executing transaction: ${e}`);
+      }
     }
     // делим на чанки, потому что вылазит ошибка от призмы из-за одного запроса на большое количество данных ================
 
-    // for (let i = 0; i < 30; i++) {
-    //   console.log(13, "==================");
-    // }
     console.log(`Ended playing ${mode} matches (count: ${matchesCount})!`);
     console.log(new Date());
   }
@@ -419,7 +363,7 @@ async function scheduleMatchesInterval() {
     const eightHoursInMs = 1000 * 60 * 60 * 8;
     const currentHour = now.getUTCHours() % 8;
     const msPassed =
-      1000 * 60 * 60 * ((currentHour) % 8) +
+      1000 * 60 * 60 * (currentHour % 8) +
       1000 * 60 * now.getMinutes() +
       1000 * now.getSeconds() +
       now.getMilliseconds();
