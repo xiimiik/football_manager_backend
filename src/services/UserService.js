@@ -1,4 +1,5 @@
 const { prisma } = require("../../prisma-client");
+const { trainingTime, trainingAvilableTime } = require("../utils/dates.utils");
 
 class UserService {
   async getUserInfo(id) {
@@ -47,7 +48,7 @@ class UserService {
     });
 
     const playersJson = JSON.parse(user_players.playersJson);
-    const player = playersJson.find(player => player.playerId === playerId);
+    const player = playersJson.find((player) => player.playerId === playerId);
 
     if (!playersJson || !player) {
       return null;
@@ -203,7 +204,9 @@ class UserService {
       });
 
       const playersJson = JSON.parse(user_players.lastTeam);
-      const playerIndex = playersJson.findIndex(player => player.playerId === playerId);
+      const playerIndex = playersJson.findIndex(
+        (player) => player.playerId === playerId
+      );
 
       if (!playersJson || playerIndex < 0) {
         return false;
@@ -217,8 +220,8 @@ class UserService {
         },
         data: {
           lastTeam: JSON.stringify(playersJson),
-        }
-      })
+        },
+      });
 
       return true;
     } catch {
@@ -246,11 +249,13 @@ class UserService {
     try {
       const user_players = await prisma.user_players.findFirst({
         where: {
-          userId: id
+          userId: id,
         },
       });
-  
-      const playersJson = JSON.parse(user_players.playersJson).filter(player => player.playerId !== playerId);
+
+      const playersJson = JSON.parse(user_players.playersJson).filter(
+        (player) => player.playerId !== playerId
+      );
 
       await prisma.user_players.update({
         data: {
@@ -270,24 +275,28 @@ class UserService {
     try {
       const user_players = await prisma.user_players.findFirst({
         where: {
-          userId: id
+          userId: id,
         },
       });
-      
+
       const playersJson = JSON.parse(user_players.playersJson);
       const waitingPlayersJson = JSON.parse(user_players.waitingPlayersJson);
-  
+
       const largestPlayerId = playersJson.reduce((acc, cur) => {
         return cur.playerId > acc ? cur.playerId : acc;
       }, 0);
-  
-      const waitingPlayer = waitingPlayersJson.find(player => player.playerId === waitingId);
-      
+
+      const waitingPlayer = waitingPlayersJson.find(
+        (player) => player.playerId === waitingId
+      );
+
       if (largestPlayerId <= 0 || !waitingPlayer) {
         return false;
       }
-      
-      const filteredWaiting = waitingPlayersJson.filter(player => player.playerId !== waitingPlayer.playerId);
+
+      const filteredWaiting = waitingPlayersJson.filter(
+        (player) => player.playerId !== waitingPlayer.playerId
+      );
 
       waitingPlayer.playerId = largestPlayerId + 1;
       playersJson.push(waitingPlayer);
@@ -374,10 +383,10 @@ class UserService {
       await prisma.user_players.upsert({
         create: {
           userId: id,
-          tempDialogs,
+          tempDialogs: JSON.stringify(tempDialogs),
         },
         update: {
-          tempDialogs,
+          tempDialogs: JSON.stringify(tempDialogs),
         },
         where: {
           userId: id,
@@ -487,10 +496,76 @@ class UserService {
           userId: id,
         },
         data: {
-          clubTalk: place
+          clubTalk: place,
+        },
+      });
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async checkTraining() {
+    const now = new Date();
+    const [scT, th3, frT] = trainingTime();
+
+    const night = trainingAvilableTime(0);
+    const morning = trainingAvilableTime(8);
+    const day = trainingAvilableTime(16);
+
+    if (night <= now && now < scT) {
+      return true;
+    } else if (morning <= now && now < th3) {
+      return true;
+    } else if (day <= now && now < frT) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  async checkTrainingResults(id) {
+    try {
+      const { count } = await prisma.training.findFirst({
+        where: {
+          playerId: id
+        },
+        select: {
+          count: true,
         }
       });
-  
+
+      return count;
+    } catch {
+      return null;
+    }
+  }
+
+  async doTraining(id) {
+    try {
+      const { count = 1 } = await prisma.training.findFirst({
+        where: {
+          playerId: id
+        },
+        select: {
+          count: true,
+        }
+      }) || {};
+
+      await prisma.training.upsert({
+        create: {
+          playerId: id,
+          count,
+        },
+        where: {
+          playerId: id
+        },
+        update: {
+          count: count + 1,
+        }
+      });
+
       return true;
     } catch {
       return false;

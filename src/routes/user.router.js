@@ -146,7 +146,7 @@ UserApiRouter.put(
     check("id")
       .isInt()
       .withMessage("Поле <id> должно быть типа integer!")
-      .toInt()
+      .toInt(),
   ],
   UserController.updateWaitingPlayers
 );
@@ -291,6 +291,30 @@ UserApiRouter.post(
       .toInt(),
   ],
   UserController.setClubTalk
+);
+
+UserApiRouter.get("/checkTraining", [], UserController.checkTraining);
+
+UserApiRouter.get(
+  "/:id/checkTrainingResults",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.checkTrainingResults
+);
+
+UserApiRouter.post(
+  "/:id/doTraining",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.doTraining
 );
 
 module.exports = UserApiRouter;

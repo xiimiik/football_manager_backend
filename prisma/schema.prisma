@@ -153,7 +153,7 @@ model Game_server {
 model Training {
   playerId Int
   player   User @relation(fields: [playerId], references: [id])
-  count    Int
+  count    Int  @default(0)
 
   @@id([playerId])
 }

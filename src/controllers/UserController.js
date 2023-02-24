@@ -525,6 +525,71 @@ class UserController {
       next(e);
     }
   }
+
+  async checkTraining(req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        throw ApiError.BadRequest("Неверные данные!", {
+          errors: errors.errors,
+        });
+
+      const isAvilable = await UserService.checkTraining();
+
+      res.json({
+        message: "User`s training:",
+        details: {
+          isAvilable,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async checkTrainingResults(req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        throw ApiError.BadRequest("Неверные данные!", {
+          errors: errors.errors,
+        });
+
+      const { id } = req.params;
+      const results = await UserService.checkTrainingResults(id);
+
+      res.json({
+        message: "User`s training results:",
+        details: {
+          results,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async doTraining(req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        throw ApiError.BadRequest("Неверные данные!", {
+          errors: errors.errors,
+        });
+
+      const { id } = req.params;
+      const isSeted = await UserService.doTraining(id);
+
+      res.json({
+        message: "User's training has been conducted:",
+        details: {
+          isSeted,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
 }
 
 module.exports = new UserController();
