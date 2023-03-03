@@ -246,8 +246,7 @@ async function scheduleLeaguesInterval() {
 
 async function scheduleMatchesInterval() {
   async function playMatches(mode) {
-    console.log(`Started playing ${mode} matches!`);
-    console.log(new Date());
+    console.log(`Started playing ${mode} matches! `, new Date());
     let where;
     switch (mode) {
       case "current":
@@ -287,6 +286,8 @@ async function scheduleMatchesInterval() {
       where,
     });
 
+    console.log(`count: ${matchesCount} `);
+
     if (matchesCount > chunkLength) {
       for (let i = 0; i < Math.floor(matchesCount / chunkLength) + 1; i++) {
         const skip = i * chunkLength;
@@ -296,11 +297,7 @@ async function scheduleMatchesInterval() {
             id: true,
           },
           where,
-          skip,
-          take,
-          orderBy: {
-            id: "asc",
-          },
+          take
         });
 
         const queries = [];
@@ -337,8 +334,7 @@ async function scheduleMatchesInterval() {
     }
     // делим на чанки, потому что вылазит ошибка от призмы из-за одного запроса на большое количество данных ================
 
-    console.log(`Ended playing ${mode} matches (count: ${matchesCount})!`);
-    console.log(new Date());
+    console.log(`Ended playing ${mode} matches (count: ${matchesCount})! `, new Date());
   }
 
   async function clearTempPlayer() {

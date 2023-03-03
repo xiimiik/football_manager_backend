@@ -85,6 +85,15 @@ class AuthService {
 
       return userId;
     } else {
+
+      await prisma.user.update({
+        where: {
+          id: botId,
+        },
+        data: {
+          isBot: false,
+        }
+      });
       return botId;
     }
   }
@@ -130,19 +139,13 @@ class AuthService {
     });
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return false;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid password",
-      });
+      return false;
     }
 
     return user.userId;
