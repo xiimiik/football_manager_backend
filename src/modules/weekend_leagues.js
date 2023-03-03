@@ -1,12 +1,13 @@
 const { prisma } = require("../../prisma-client.js");
 const { avatarDefying } = require("../data/avatars");
 const MathService = require("../services/MathService");
-const {
-  getUTCDateZeroTimestamp,
-  getNextNeededWeekDayTimestamp,
-} = require("../utils/dates.utils");
+const { getSaturdayTimestamp } = require("../utils/dates.utils");
 
-async function playDebugMatch_v_17otr_v1_penalty(matchId, saveToDB) {
+async function playDebugMatch_v_17otr_v1_penalty(
+  matchId,
+  saveToDB,
+  isNextLevel
+) {
   // debug functions ===================================================================================
   function getPlayerAsmParts(player) {
     let technicalSkills = {},
@@ -272,45 +273,136 @@ async function playDebugMatch_v_17otr_v1_penalty(matchId, saveToDB) {
     return asm;
   }
 
-  const match = await prisma.weekend_match.findFirst({
-    select: {
-      id: true,
-      user1: {
-        select: {
-          id: true,
-          avatar: true,
-          lastTactic: true,
-          lastTeam: true,
-          players: {
-            select: {
-              playersJson: true,
+  let match;
+
+  if (isNextLevel) {
+    match = await prisma.weekend_match_next_level.findFirst({
+      select: {
+        id: true,
+        user1: {
+          select: {
+            id: true,
+            avatar: true,
+            lastTactic: true,
+            lastTeam: true,
+            players: {
+              select: {
+                playersJson: true,
+              },
             },
           },
         },
-      },
-      user2: {
-        select: {
-          id: true,
-          avatar: true,
-          lastTactic: true,
-          lastTeam: true,
-          players: {
-            select: {
-              playersJson: true,
+        user2: {
+          select: {
+            id: true,
+            avatar: true,
+            lastTactic: true,
+            lastTeam: true,
+            players: {
+              select: {
+                playersJson: true,
+              },
             },
           },
         },
-      },
-      league: {
-        select: {
-          level: true,
+        league: {
+          select: {
+            level: true,
+          },
         },
       },
-    },
-    where: {
-      id: matchId,
-    },
-  });
+      where: {
+        id: matchId,
+      },
+    });
+  } else {
+    match = await prisma.weekend_match.findFirst({
+      select: {
+        id: true,
+        user1: {
+          select: {
+            id: true,
+            avatar: true,
+            lastTactic: true,
+            lastTeam: true,
+            players: {
+              select: {
+                playersJson: true,
+              },
+            },
+          },
+        },
+        user2: {
+          select: {
+            id: true,
+            avatar: true,
+            lastTactic: true,
+            lastTeam: true,
+            players: {
+              select: {
+                playersJson: true,
+              },
+            },
+          },
+        },
+        league: {
+          select: {
+            level: true,
+          },
+        },
+      },
+      where: {
+        id: matchId,
+      },
+    });
+  }
+
+  const positions = [
+    "FW:0",
+    "WG:0",
+    "WG:1",
+    "CM:0",
+    "CM:1",
+    "CM:2",
+    "WB:0",
+    "WB:1",
+    "CD:0",
+    "CD:1",
+    "GK:0",
+  ];
+
+  const user1resultLastTeam = JSON.parse(match.user1.lastTeam);
+  const user2resultLastTeam = JSON.parse(match.user2.lastTeam);
+  const user1resultAllPlayers = JSON.parse(match.user1.players.playersJson);
+  const user2resultAllPlayers = JSON.parse(match.user2.players.playersJson);
+
+  if (user1resultLastTeam.length !== 11) {
+    const maxPlayerId = user1resultAllPlayers.reduce((max, player) => {
+      return player.playerId > max ? player.playerId : max;
+    }, 0);
+
+    positions.forEach((position) => {
+      if (!user1resultLastTeam.some((player) => player.position === position)) {
+        const newPlayer = generateCard(maxPlayerId, position);
+        newPlayer.position = position;
+        user1resultLastTeam.push(newPlayer);
+      }
+    });
+  }
+
+  if (user2resultLastTeam.length !== 11) {
+    const maxPlayerId = user2resultAllPlayers.reduce((max, player) => {
+      return player.playerId > max ? player.playerId : max;
+    }, 0);
+
+    positions.forEach((position) => {
+      if (!user2resultLastTeam.some((player) => player.position === position)) {
+        const newPlayer = generateCard(maxPlayerId, position);
+        newPlayer.position = position;
+        user2resultLastTeam.push(newPlayer);
+      }
+    });
+  }
 
   let matchLogs = [],
     user1 = {
@@ -318,16 +410,16 @@ async function playDebugMatch_v_17otr_v1_penalty(matchId, saveToDB) {
       avatar: match.user1.avatar,
       tactic: JSON.parse(match.user1.lastTactic),
       players: [],
-      resultLastTeam: JSON.parse(match.user1.lastTeam),
-      resultAllPlayers: JSON.parse(match.user1.players.playersJson),
+      resultLastTeam: user1resultLastTeam,
+      resultAllPlayers: user1resultAllPlayers,
     },
     user2 = {
       id: match.user2.id,
       avatar: match.user1.avatar,
       tactic: JSON.parse(match.user1.lastTactic),
       players: [],
-      resultLastTeam: JSON.parse(match.user1.lastTeam),
-      resultAllPlayers: JSON.parse(match.user1.players.playersJson),
+      resultLastTeam: user2resultLastTeam,
+      resultAllPlayers: user2resultAllPlayers,
     },
     playersOnPositions = [
       {
@@ -3817,7 +3909,7 @@ async function playDebugMatch_v_17otr_v1_penalty(matchId, saveToDB) {
   };
 
   if (saveToDB) {
-    matchResult.dbQueries = [
+    matchResult.dbQueries.push(
       prisma.user.update({
         where: {
           id: user1.id,
@@ -3849,19 +3941,35 @@ async function playDebugMatch_v_17otr_v1_penalty(matchId, saveToDB) {
         data: {
           playersJson: JSON.stringify(user2.resultAllPlayers),
         },
-      }),
-      prisma.weekend_match.update({
-        where: {
-          id: match.id,
-        },
-        data: {
-          logs: JSON.stringify(resultLogs),
-          score: goals[0] + ":" + goals[1],
-        },
-      }),
-    ];
-  }
+      })
+    );
 
+    if (isNextLevel) {
+      matchResult.dbQueries.push(
+        prisma.weekend_match_next_level.update({
+          where: {
+            id: match.id,
+          },
+          data: {
+            logs: JSON.stringify(resultLogs),
+            score: goals[0] + ":" + goals[1],
+          },
+        })
+      );
+    } else {
+      matchResult.dbQueries.push(
+        prisma.weekend_match.update({
+          where: {
+            id: match.id,
+          },
+          data: {
+            logs: JSON.stringify(resultLogs),
+            score: goals[0] + ":" + goals[1],
+          },
+        })
+      );
+    }
+  }
   return matchResult;
 }
 
@@ -3870,6 +3978,9 @@ async function createLeaguesNMatches() {
     prisma.weekend_match.deleteMany({}),
     prisma.weekend_league_players.deleteMany({}),
     prisma.weekend_league.deleteMany({}),
+    prisma.weekend_match_next_level.deleteMany({}),
+    prisma.weekend_league_players_next_level.deleteMany({}),
+    prisma.weekend_league_next_level.deleteMany({}),
   ]);
 
   let servers = await prisma.game_server.findMany({
@@ -3898,9 +4009,9 @@ async function createLeaguesNMatches() {
     },
   });
 
-  let leaguesQueries = [],
-    utcTimestamps = [3, 7, 11, 15, 19],
-    nextTimestamp = new Date();
+  const leaguesQueries = [];
+  const utcTimestamps = [3, 7, 11, 15, 19];
+  const nextTimestamp = getSaturdayTimestamp(new Date());
 
   nextTimestamp.setUTCHours(utcTimestamps[0], 0, 0, 0);
 
@@ -3965,24 +4076,96 @@ async function playMatchesPhase(phase) {
     `(weekend_leagues.js) Started playing weekend matches (phase ${phase})!`
   );
 
-  const matches = await prisma.weekend_match.findMany({
+  const chunkLength = 400;
+  const where = {
+    score: null,
+  };
+
+  if (phase <= 4) {
+    const matchesCount = await prisma.weekend_match.count({
+      where,
+    });
+
+    const matches = await prisma.weekend_match.findMany({
       select: {
         id: true,
       },
-      where: {
-        league: {
-          level: phase,
+      where,
+    });
+
+    const numChunks = Math.ceil(matchesCount / chunkLength);
+
+    if (matchesCount > chunkLength) {
+      for (let i = 0; i < numChunks; i++) {
+        const skip = i * chunkLength;
+        const take = Math.min(chunkLength, matchesCount - skip);
+        const chunkOfMatches = matches.slice(skip, take + skip);
+        const queries = [];
+
+        console.log("chunkOfMatches ", chunkOfMatches.length);
+
+        for (const match of chunkOfMatches) {
+          const { dbQueries } = await playDebugMatch_v_17otr_v1_penalty(
+            match.id,
+            true
+          );
+          queries.push(...dbQueries);
+        }
+
+        try {
+          await prisma.$transaction(queries);
+        } catch (e) {
+          console.log(`Error executing transaction: ${e}`);
+        }
+      }
+    } else {
+      const matches = await prisma.weekend_match.findMany({
+        select: {
+          id: true,
         },
+        where,
+      });
+
+      const queries = [];
+
+      for (const match of matches) {
+        const { dbQueries } = await playDebugMatch_v_17otr_v1_penalty(
+          match.id,
+          true
+        );
+        queries.push(...dbQueries);
+      }
+
+      try {
+        await prisma.$transaction(queries);
+      } catch (e) {
+        console.log(`Error executing transaction: ${e}`);
+      }
+    }
+  } else {
+    const matches = await prisma.weekend_match_next_level.findMany({
+      select: {
+        id: true,
       },
-    }),
-    matchesQueries = [];
+      where,
+    });
 
-  for (const match of matches) {
-    let { dbQueries } = await playDebugMatch_v_17otr_v1_penalty(match.id, true);
-    matchesQueries.push(...dbQueries);
+    const queries = [];
+    for (const match of matches) {
+      const { dbQueries } = await playDebugMatch_v_17otr_v1_penalty(
+        match.id,
+        true,
+        true
+      );
+      queries.push(...dbQueries);
+    }
+
+    try {
+      await prisma.$transaction(queries);
+    } catch (e) {
+      console.log(`Error executing transaction: ${e}`);
+    }
   }
-
-  await prisma.$transaction(matchesQueries);
 }
 
 async function calcMatchesPhase(phase) {
@@ -3990,11 +4173,38 @@ async function calcMatchesPhase(phase) {
     `(weekend_leagues.js) Started calculating weekend matches results (phase ${phase})!`
   );
 
-  let leagues = await prisma.weekend_league.findMany({
+  const utcHourCheckpoints = [3, 7, 11, 15, 19];
+  const now = new Date();
+  const saturdayTimestamp = getSaturdayTimestamp(now);
+  const leaguesQueries = [];
+
+  let nextTimestamp = new Date(
+    Date.UTC(
+      saturdayTimestamp.getUTCFullYear(),
+      saturdayTimestamp.getUTCMonth(),
+      saturdayTimestamp.getUTCDate() + (phase < 5 ? 0 : 1),
+      utcHourCheckpoints[phase % 5]
+    )
+  );
+
+  let prevTimestamp = new Date(
+    Date.UTC(
+      saturdayTimestamp.getUTCFullYear(),
+      saturdayTimestamp.getUTCMonth(),
+      saturdayTimestamp.getUTCDate() + ((phase - 1) < 5 ? 0 : 1),
+      utcHourCheckpoints[(phase - 1) % 5]
+    )
+  );
+
+  let leagues;
+
+  if (phase <= 4) {
+    leagues = await prisma.weekend_league.findMany({
       select: {
         id: true,
         server_id: true,
         country_id: true,
+        level: true,
         weekendLeagueMatches: {
           select: {
             id: true,
@@ -4002,134 +4212,175 @@ async function calcMatchesPhase(phase) {
             user2_id: true,
             score: true,
           },
+          where: {
+            time: prevTimestamp.toISOString(),
+          },
         },
       },
       where: {
         level: phase,
       },
-    }),
-    leaguesQueries = [],
-    matchesTime = new Date();
-
-  matchesTime.setUTCHours(7, 0, 0, 0);
-
-  for (const league of leagues) {
-    let winnedUsers = [],
-      matchesData = [];
-
-    //getting winned users
-    for (const currMatch of league.weekendLeagueMatches) {
-      const goals = currMatch.score.split(":");
-
-      if (goals[0] > goals[1])
-        winnedUsers.push({
-          playerId: currMatch.user1_id,
-        });
-      else
-        winnedUsers.push({
-          playerId: currMatch.user2_id,
-        });
-    }
-
-    //getting matches data with winned users
-    for (let usIdx = 0; usIdx < winnedUsers.length / 2; usIdx++)
-      matchesData.push({
-        user1_id: winnedUsers[usIdx].playerId,
-        user2_id: winnedUsers[winnedUsers.length - 1 - usIdx].playerId,
-        time: matchesTime,
-      });
-
-    // leaguesQueries.push(
-    //   prisma.weekend_league.update({
-    //     where: {
-    //       id: league.id
-    //     },
-    //     data: {
-    //       level: league.level + 1,
-    //       weekendLeaguePlayers: {
-    //         create: winnedUsers,
-    //       },
-    //       weekendLeagueMatches: {
-    //         create: matchesData,
-    //       },
-    //     },
-    //   })
-    // );
-
-    // leaguesQueries.push(
-    //   prisma.weekend_league.update({
-    //     where: {
-    //       id: league.id
-    //     },
-    //     data: {
-    //       level: league.level + 1,
-    //       weekendLeaguePlayers: {
-    //         deleteMany: {
-    //           playerId: winnedUsers
-    //         },
-    //         createMany: {
-    //           data: winnedUsers
-    //         },
-    //       },
-    //       weekendLeagueMatches: {
-    //         // deleteMany: {
-    //         //   leagueId: league.id
-    //         // },
-    //         createMany: {
-    //           data: matchesData
-    //         },
-    //       },
-    //     },
-    //   })
-    // );
-
-    // leaguesQueries.push(
-    //   prisma.weekend_league.update({
-    //     where: {
-    //       id: league.id
-    //     },
-    //     data: {
-    //       level: league.level + 1,
-    //     },
-    //   }),
-    //   prisma.weekend_match.createMany({
-    //     data: matchesData
-    //   }),
-    //   prisma.weekend_league_players.deleteMany({
-    //     where: {
-    //       id: {
-    //         notIn: winnedUsers.map(user => user.playerId)
-    //       }
-    //   }
-    //   })
-    // );
-    
-    leaguesQueries.push(
-      prisma.weekend_league.create({
-        data: {
-          isFull: false,
-          server_id: element.server_id,
-          country_id: element.country_id,
-          level: 2,
-          weekendLeaguePlayers: {
-            create: winnedUsers,
+    });
+  } else {
+    leagues = await prisma.weekend_league_next_level.findMany({
+      select: {
+        id: true,
+        server_id: true,
+        country_id: true,
+        level: true,
+        weekendLeagueMatches: {
+          select: {
+            id: true,
+            user1_id: true,
+            user2_id: true,
+            score: true,
           },
-          weekendLeagueMatches: {
-            create: matchesData,
+          where: {
+            time: prevTimestamp.toISOString(),
           },
         },
-      })
-    );
+      },
+      where: {
+        level: phase,
+      },
+    });
+  }
+
+  if (phase === 4) {
+    const newLeagues = [];
+    const servers = {};
+    const winnedUsersByCountry = {};
+
+    for (const league of leagues) {
+      const { server_id, country_id, weekendLeagueMatches } = league;
+
+      if (!servers[server_id]) {
+        servers[server_id] = { server_id, countries: [] };
+        newLeagues.push(servers[server_id]);
+      }
+
+      const [score1, score2] = weekendLeagueMatches[0].score.split(":");
+      const winnerId =
+        score1 > score2
+          ? weekendLeagueMatches[0].user1_id
+          : weekendLeagueMatches[0].user2_id;
+
+      if (!winnedUsersByCountry[country_id]) {
+        winnedUsersByCountry[country_id] = { winnedUsers: [], matchesData: [] };
+      }
+
+      winnedUsersByCountry[country_id].winnedUsers.push({ playerId: winnerId });
+
+      const countries = servers[server_id].countries;
+      const existingCountry = countries.find(
+        (c) => c.country_id === country_id
+      );
+
+      if (!existingCountry) {
+        countries.push({ country_id });
+      }
+    }
+
+    for (const [country_id, { winnedUsers }] of Object.entries(
+      winnedUsersByCountry
+    )) {
+      for (let usIdx = 0; usIdx < winnedUsers.length / 2; usIdx++) {
+        winnedUsersByCountry[country_id].matchesData.push({
+          user1_id: winnedUsers[usIdx].playerId,
+          user2_id: winnedUsers[winnedUsers.length - 1 - usIdx].playerId,
+          time: nextTimestamp,
+        });
+      }
+    }
+
+    for (const server of newLeagues) {
+      for (const { country_id } of server.countries) {
+        const { winnedUsers, matchesData } = winnedUsersByCountry[country_id];
+
+        leaguesQueries.push(
+          prisma.weekend_league_next_level.create({
+            data: {
+              isFull: false,
+              server_id: server.server_id,
+              country_id,
+              level: 5,
+              weekendLeaguePlayers: {
+                create: winnedUsers,
+              },
+              weekendLeagueMatches: {
+                create: matchesData,
+              },
+            },
+          })
+        );
+      }
+    }
+  } else {
+    for (const league of leagues) {
+      const winnedUsers = [];
+      const matchesData = [];
+
+      //getting winned users and add matches
+
+      for (const currMatch of league.weekendLeagueMatches) {
+        const [score1, score2] = currMatch.score.split(":");
+        const winnerId =
+          score1 > score2 ? currMatch.user1_id : currMatch.user2_id;
+        winnedUsers.push({ playerId: winnerId });
+      }
+
+      for (let usIdx = 0; usIdx < winnedUsers.length / 2; usIdx++)
+        matchesData.push({
+          leagueId: league.id,
+          user1_id: winnedUsers[usIdx].playerId,
+          user2_id: winnedUsers[winnedUsers.length - 1 - usIdx].playerId,
+          time: nextTimestamp,
+        });
+
+      //getting winned users and add matches
+
+      if (phase < 4) {
+        leaguesQueries.push(
+          prisma.weekend_league.update({
+            where: {
+              id: league.id,
+            },
+            data: {
+              level: league.level + 1,
+            },
+          }),
+          prisma.weekend_match.createMany({
+            data: matchesData,
+          })
+        );
+      } else if (phase === 7) {
+        return;
+      } else {
+        leaguesQueries.push(
+          prisma.weekend_league_next_level.update({
+            where: {
+              id: league.id,
+            },
+            data: {
+              level: league.level + 1,
+            },
+          }),
+          prisma.weekend_match_next_level.createMany({
+            data: matchesData,
+          })
+        );
+      }
+    }
   }
 
   await prisma.$transaction(leaguesQueries);
+  console.log(`Finished calculating weekend matches results (phase ${phase})!`);
 }
 
 async function createWeekendLeagues_v2(saturdayTimestamp) {
   await createLeaguesNMatches();
-
   const utcHourCheckpoints = [3, 7, 11, 15, 19];
-  for (let phaseIdx = 0; phaseIdx < 10; phaseIdx++) {
+  for (let phaseIdx = 0; phaseIdx < 7; phaseIdx++) {
     let nextTimestamp = new Date(
       Date.UTC(
         saturdayTimestamp.getUTCFullYear(),
@@ -4155,53 +4406,20 @@ async function createWeekendLeagues_v2(saturdayTimestamp) {
 async function weekendLeaguesModule() {
   try {
     const now = new Date();
-    let saturdayTimestamp;
+    const saturdayTimestamp = getSaturdayTimestamp(now);
+    createWeekendLeagues_v2(saturdayTimestamp);
 
-    switch (now.getUTCDay()) {
-      case 6:
-        saturdayTimestamp = getUTCDateZeroTimestamp(now);
-        break;
-
-      case 0:
-        saturdayTimestamp = getUTCDateZeroTimestamp(now, -1);
-        break;
-
-      default:
-        saturdayTimestamp = getNextNeededWeekDayTimestamp(6);
-        break;
-    }
-
-    if (now >= saturdayTimestamp) {
-      createWeekendLeagues_v2(saturdayTimestamp);
-
-      let nextSaturdayTimestamp = getNextNeededWeekDayTimestamp(6);
-      setTimeout(() => {
-        createWeekendLeagues_v2(nextSaturdayTimestamp);
-
-        const sevenDaysMs = 1000 * 60 * 60 * 24 * 7;
-        setInterval(() => {
-          nextSaturdayTimestamp = new Date(nextSaturdayTimestamp + sevenDaysMs);
-          createWeekendLeagues_v2(nextSaturdayTimestamp);
-        }, sevenDaysMs);
-      }, nextSaturdayTimestamp - now);
-    } else {
-      setTimeout(() => {
-        createWeekendLeagues_v2(saturdayTimestamp);
-
-        const sevenDaysMs = 1000 * 60 * 60 * 24 * 7;
-        let nextSaturdayTimestamp = saturdayTimestamp;
-        setInterval(() => {
-          nextSaturdayTimestamp = new Date(nextSaturdayTimestamp + sevenDaysMs);
-          createWeekendLeagues_v2(nextSaturdayTimestamp);
-        }, sevenDaysMs);
-      }, saturdayTimestamp - now);
-    }
+    const sevenDaysMs = 1000 * 60 * 60 * 24 * 7;
+    let nextSaturdayTimestamp = saturdayTimestamp + sevenDaysMs;
 
     setTimeout(async () => {
-      setInterval(createWeekendLeagues_v2, 1000 * 60 * 60 * 24 * 7);
+      await createWeekendLeagues_v2(nextSaturdayTimestamp);
 
-      await createWeekendLeagues_v2(saturdayTimestamp);
-    }, saturdayTimestamp - now);
+      setInterval(async () => {
+        nextSaturdayTimestamp += sevenDaysMs;
+        await createWeekendLeagues_v2(nextSaturdayTimestamp);
+      }, sevenDaysMs);
+    }, nextSaturdayTimestamp - now);
   } catch (e) {
     console.log("Error:", e);
   }
