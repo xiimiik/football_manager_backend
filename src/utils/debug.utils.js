@@ -358,6 +358,7 @@ async function playDebugMatch_17otr_v3_09I19(matchId, saveToDB) {
         const newPlayer = generateCard(maxPlayerId, position);
         newPlayer.position = position;
         user1resultLastTeam.push(newPlayer);
+        user1resultAllPlayers.push(newPlayer);
       }
     });
   }
@@ -373,6 +374,7 @@ async function playDebugMatch_17otr_v3_09I19(matchId, saveToDB) {
         const newPlayer = generateCard(maxPlayerId, position);
         newPlayer.position = position;
         user2resultLastTeam.push(newPlayer);
+        user2resultAllPlayers.push(newPlayer);
       }
     });
   }
