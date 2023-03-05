@@ -4407,19 +4407,36 @@ async function weekendLeaguesModule() {
   try {
     const now = new Date();
     const saturdayTimestamp = getSaturdayTimestamp(now);
-    createWeekendLeagues_v2(saturdayTimestamp);
+    // createWeekendLeagues_v2(saturdayTimestamp);
 
     const sevenDaysMs = 1000 * 60 * 60 * 24 * 7;
-    let nextSaturdayTimestamp = saturdayTimestamp + sevenDaysMs;
+    let nextSaturdayTimestamp = new Date(saturdayTimestamp.getTime() + sevenDaysMs);
 
-    setTimeout(async () => {
-      await createWeekendLeagues_v2(nextSaturdayTimestamp);
-
-      setInterval(async () => {
-        nextSaturdayTimestamp += sevenDaysMs;
+    if (saturdayTimestamp.getTime() < now.getTime()) {
+      setTimeout(async () => {
         await createWeekendLeagues_v2(nextSaturdayTimestamp);
-      }, sevenDaysMs);
-    }, nextSaturdayTimestamp - now);
+  
+        setInterval(async () => {
+          nextSaturdayTimestamp = new Date(nextSaturdayTimestamp.getTime() + sevenDaysMs);
+          await createWeekendLeagues_v2(nextSaturdayTimestamp);
+        }, sevenDaysMs);
+      }, nextSaturdayTimestamp - now);
+
+      console.log(`All is fine, next weekend leagues update at ${nextSaturdayTimestamp}`);
+    } else {
+      await createWeekendLeagues_v2(saturdayTimestamp);
+
+      setTimeout(async () => {
+        await createWeekendLeagues_v2(nextSaturdayTimestamp);
+  
+        setInterval(async () => {
+          nextSaturdayTimestamp = new Date(nextSaturdayTimestamp.getTime() + sevenDaysMs);
+          await createWeekendLeagues_v2(nextSaturdayTimestamp);
+        }, sevenDaysMs);
+      }, nextSaturdayTimestamp - now);
+
+      console.log(`Its late, but weekend leagues was updated`);
+    }
   } catch (e) {
     console.log("Error:", e);
   }

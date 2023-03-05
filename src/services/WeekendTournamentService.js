@@ -37,16 +37,29 @@ class WeekendTournamentService {
   }
 
   async getWeekendMatchesByPhase(phase) {
-    return await prisma.weekend_match.findMany({
-      select: {
-        id: true,
-      },
-      where: {
-        league: {
-          level: phase,
+    if (phase <= 4) {
+      return await prisma.weekend_match.findMany({
+        select: {
+          id: true,
         },
-      },
-    });
+        where: {
+          league: {
+            level: phase,
+          },
+        },
+      });
+    } else {
+      return await prisma.weekend_match_next_level.findMany({
+        select: {
+          id: true,
+        },
+        where: {
+          league: {
+            level: phase,
+          },
+        },
+      });
+    }
   }
 
   async getLeagueLeaderboard(leagueId) {
