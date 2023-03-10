@@ -24,6 +24,7 @@ model User {
   isBot      Boolean
   lastTactic String?
   lastTeam   String?
+  training   String?
 
   federated_credentials Federated_credentials[]
   players               User_players?
@@ -37,7 +38,6 @@ model User {
   weekendTeams2_next_level        Weekend_match_next_level[]          @relation("weekend_teams2_next_level")
   weekendLeaguePlayers            Weekend_league_players[]
   weekendLeaguePlayers_next_level Weekend_league_players_next_level[]
-  Training                        Training[]
 }
 
 //карточки игроков============
@@ -148,14 +148,6 @@ model Game_server {
   leagues                   League[]
   weekendLeagues            Weekend_league[]
   weekendLeagues_next_level Weekend_league_next_level[]
-}
-
-model Training {
-  playerId Int
-  player   User @relation(fields: [playerId], references: [id])
-  count    Int  @default(0)
-
-  @@id([playerId])
 }
 
 model Weekend_league {
