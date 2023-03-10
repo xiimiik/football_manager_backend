@@ -47,13 +47,13 @@ class AuthController {
             const errors = validationResult(req);
             if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
 
-            const { regionId, countryId } = req.body
-            const {id: botId} = await AuthService.getBotByCountry(regionId, countryId);
+            const { countryId } = req.body
+            const id = await AuthService.getBotByCountry(countryId);
             
             res.json({
                 message: `ID бота по из страны #${countryId}:`,
                 details: {
-                    userId: botId
+                    userId: id
                 },
             });
         }

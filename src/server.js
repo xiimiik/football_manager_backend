@@ -4,6 +4,7 @@ const { leaguesModule } = require("./modules/leagues");
 const { weekendLeaguesModule } = require("./modules/weekend_leagues");
 
 const serverless = require("serverless-http");
+const { trainingModule } = require("./modules/training");
 
 const PORT = process.env.PORT || 8010;
 
@@ -29,6 +30,7 @@ app.use(errorMiddleware);
 app.listen(PORT, async () => {
   await leaguesModule();
   await weekendLeaguesModule();
+  await trainingModule();
 
   console.log(`(server.js) Server is listening on port ${PORT}`);
 });

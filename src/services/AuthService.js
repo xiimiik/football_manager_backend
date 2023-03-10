@@ -27,7 +27,7 @@ class AuthService {
     });
   }
 
-  async getBotByCountry(regionId, countryId) {
+  async getBotByCountry(countryId) {
     const botId = await prisma.user.findFirst({
       where: {
         AND: [
@@ -51,51 +51,41 @@ class AuthService {
     });
 
     if (!botId) {
-      await ServerService.generateServer(regionId);
-      const userId = await prisma.user.findFirst({
-        where: {
-          AND: [
-            {
-              leaguePlayers: {
-                some: {
-                  league: {
-                    country_id: countryId,
-                  },
-                },
-              },
-            },
-            {
-              isBot: true,
-            },
-          ],
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      await prisma.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          isBot: false,
-        }
-      })
-
-      return userId;
-    } else {
-
-      await prisma.user.update({
-        where: {
-          id: botId,
-        },
-        data: {
-          isBot: false,
-        }
-      });
-      return botId;
+      return null;
     }
+
+    const today = new Date();
+    const lastMonday = new Date(
+      Date.UTC(
+        today.getUTCFullYear(),
+        today.getUTCMonth(),
+        today.getUTCDate() - ((today.getUTCDay() + 6) % 7),
+        0,
+        0,
+        0
+      )
+    );
+
+    const trainingJson = {
+      isAvailable: false,
+      training: [{
+        date: lastMonday,
+        points: 0,
+        nonPassed: 21,
+      }],
+    };
+
+    await prisma.user.update({
+      where: {
+        id: botId.id,
+      },
+      data: {
+        isBot: false,
+        training: JSON.stringify(trainingJson),
+      },
+    });
+
+    return botId.id;
   }
 
   async linkupUserProfile(email, password, accountId, botId) {

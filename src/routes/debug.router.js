@@ -101,37 +101,11 @@ DebugApiRouter.get(
         let currLeague = allLeagues[leagueIdx];
 
         function roundedArrStep(arr) {
-          let num0 = arr[0][0],
-            num1 = arr[0][1],
-            num2 = arr[0][2],
-            num3 = arr[0][3],
-            num4 = arr[0][4],
-            num5 = arr[0][5],
-            num6 = arr[0][6],
-            num7 = arr[1][7],
-            num8 = arr[1][6],
-            num9 = arr[1][5],
-            num10 = arr[1][4],
-            num11 = arr[1][3],
-            num12 = arr[1][2],
-            num13 = arr[1][1],
-            num14 = arr[1][0];
-
-          arr[0][0] = num14;
-          arr[0][1] = num0;
-          arr[0][2] = num1;
-          arr[0][3] = num2;
-          arr[0][4] = num3;
-          arr[0][5] = num4;
-          arr[0][6] = num5;
-          arr[1][7] = num6;
-          arr[1][6] = num7;
-          arr[1][5] = num8;
-          arr[1][4] = num9;
-          arr[1][3] = num10;
-          arr[1][2] = num11;
-          arr[1][1] = num12;
-          arr[1][0] = num13;
+          const [a0, a1, a2, a3, a4, a5, a6, a7] = arr[0];
+          const [b0, b1, b2, b3, b4, b5, b6, b7] = arr[1];
+        
+          arr[0] = [b7, a0, a1, a2, a3, a4, a5, a6];
+          arr[1] = [b6, b5, b4, b3, b2, b1, b0, a7];
         }
 
         let firstTeams = [],
@@ -147,7 +121,7 @@ DebugApiRouter.get(
 
         let allPlayersArr1 = [firstTeams, secondTeams],
           allPlayersArr2 = [[...secondTeams], [...firstTeams]], // копируем из-за "ссылочности массивов"
-          utcHours = [0, 8, 16];
+          utcHours = [9, 13, 17];
 
         for (let i = 0; i < 5; i++) {
           for (let j = 0; j < 3; j++) {

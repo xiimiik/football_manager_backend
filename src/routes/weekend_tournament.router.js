@@ -38,11 +38,11 @@ WeekendTournamentApiRouter.get(
 );
 
 WeekendTournamentApiRouter.get(
-  "/weekend_league/:id/leaderboard",
+  "/weekend_league/:userId/leaderboard",
   [
-    check("id")
+    check("userId")
       .isInt()
-      .withMessage("Поле <id> должно быть типа integer!")
+      .withMessage("Поле <userId> должно быть типа integer!")
       .toInt(),
   ],
   WeekendTournamentController.getLeagueLeaderboard

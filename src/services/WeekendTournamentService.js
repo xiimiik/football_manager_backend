@@ -2,7 +2,7 @@ const { prisma } = require("../../prisma-client");
 
 class WeekendTournamentService {
   async getUserWeekendLeague(id) {
-    return await prisma.weekend_league_players.findFirst({
+    const leagueId = await prisma.weekend_league_players.findFirst({
       where: {
         playerId: id,
       },
@@ -10,30 +10,65 @@ class WeekendTournamentService {
         leagueId: true,
       },
     });
+
+    const nextLevelLeagueId = await prisma.weekend_league_players_next_level.findFirst({
+      where: {
+        playerId: id,
+      },
+      select: {
+        leagueId: true,
+      },
+    });
+
+    return {
+      firstStage: {
+        leagueId: leagueId.leagueId
+      },
+      secondStage: {
+        leagueId: nextLevelLeagueId?.leagueId || null
+      }
+    }
   }
 
   async getUserWeekendMatches(id) {
-    return await prisma.weekend_match.findMany({
+    const matches = await prisma.weekend_match.findMany({
       where: {
         OR: [
           {
-            player1Id: id,
+            user1_id: id,
           },
           {
-            player2Id: id,
+            user2_id: id,
           },
         ],
       },
       select: {
         id: true,
-        region: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        leagueId: true,
       },
     });
+
+    const nextLevelMatches = await prisma.weekend_match_next_level.findMany({
+      where: {
+        OR: [
+          {
+            user1_id: id,
+          },
+          {
+            user2_id: id,
+          },
+        ],
+      },
+      select: {
+        id: true,
+        leagueId: true,
+      },
+    });
+
+    return {
+      firstStage: matches,
+      secondStage: nextLevelMatches,
+    };
   }
 
   async getWeekendMatchesByPhase(phase) {
@@ -62,91 +97,116 @@ class WeekendTournamentService {
     }
   }
 
-  async getLeagueLeaderboard(leagueId) {
-    const leagueMatches = await prisma.weekend_match.findMany({
-      select: {
-        user1_id: true,
-        user2_id: true,
-        score: true,
-      },
+  async getLeagueLeaderboard(userId) {
+    const matches = await prisma.weekend_league.findFirst({
       where: {
-        leagueId,
-        score: {
-          not: null,
+        weekendLeagueMatches: {
+          some: {
+            OR: [{ user1_id: userId }, { user2_id: userId }],
+          },
+        },
+      },
+      select: {
+        id: true,
+        weekendLeagueMatches: {
+          select: {
+            id: true,
+            score: true,
+            user1_id: true,
+            user2_id: true,
+          },
         },
       },
     });
-    if (!leagueMatches.length) return null;
 
-    let users = {};
-    for (let matchIdx = 0; matchIdx < leagueMatches.length; matchIdx++) {
-      let userGoals = leagueMatches[matchIdx].score.split(":"),
-        user1Id = leagueMatches[matchIdx].user1_id,
-        user2Id = leagueMatches[matchIdx].user2_id;
+    const nextLevelMatches = await prisma.weekend_league_next_level.findFirst({
+      where: {
+        weekendLeagueMatches: {
+          some: {
+            OR: [{ user1_id: userId }, { user2_id: userId }],
+          },
+        },
+      },
+      select: {
+        id: true,
+        weekendLeagueMatches: {
+          select: {
+            id: true,
+            score: true,
+            user1_id: true,
+            user2_id: true,
+          },
+        },
+      },
+    });
 
-      if (userGoals[0] === userGoals[1]) {
-        if (users[user1Id]) users[user1Id].drawCount++;
-        else
-          users[user1Id] = {
-            winsCount: 0,
-            lossCount: 0,
-            drawCount: 1,
-          };
-
-        if (users[user2Id]) users[user2Id].drawCount++;
-        else
-          users[user2Id] = {
-            winsCount: 0,
-            lossCount: 0,
-            drawCount: 1,
-          };
-      } else if (userGoals[0] > userGoals[1]) {
-        if (users[user1Id]) users[user1Id].winsCount++;
-        else
-          users[user1Id] = {
-            winsCount: 1,
-            lossCount: 0,
-            drawCount: 0,
-          };
-
-        if (users[user2Id]) users[user2Id].lossCount++;
-        else
-          users[user2Id] = {
-            winsCount: 0,
-            lossCount: 1,
-            drawCount: 0,
-          };
-      } else {
-        if (users[user1Id]) users[user1Id].lossCount++;
-        else
-          users[user1Id] = {
-            winsCount: 0,
-            lossCount: 1,
-            drawCount: 0,
-          };
-
-        if (users[user2Id]) users[user2Id].winsCount++;
-        else
-          users[user2Id] = {
-            winsCount: 1,
-            lossCount: 0,
-            drawCount: 0,
-          };
-      }
-    }
-
+    const winsCount = {};
+    const nextStageWinsCount = {};
     let usersArray = [];
-    for (const usersKey in users) {
-      usersArray.push({
-        id: +usersKey,
-        winsCount: users[usersKey].winsCount,
-        lossCount: users[usersKey].lossCount,
-        drawCount: users[usersKey].drawCount,
+    let nextStageUsersArray = [];
+
+    if (matches) {
+      matches.weekendLeagueMatches.forEach((match) => {
+        const [user1Score, user2Score] = match.score.split(":").map(Number);
+        if (user1Score > user2Score) {
+          winsCount[match.user1_id] = (winsCount[match.user1_id] || 0) + 1;
+        } else if (user2Score > user1Score) {
+          winsCount[match.user2_id] = (winsCount[match.user2_id] || 0) + 1;
+        }
       });
+
+      const allPlayers = new Set(matches.weekendLeagueMatches.flatMap((match) => [
+        match.user1_id,
+        match.user2_id,
+      ].filter((id) => id !== userId)));
+      
+
+      usersArray = Array.from(allPlayers, (id) => ({
+        id: +id,
+        winsCount: winsCount[id] || 0,
+      }));
     }
 
-    return usersArray;
+    if (nextLevelMatches) {
+      nextLevelMatches.weekendLeagueMatches.forEach((match) => {
+        const [user1Score, user2Score] = match.score.split(":").map(Number);
+        if (user1Score > user2Score) {
+          nextStageWinsCount[match.user1_id] = (nextStageWinsCount[match.user1_id] || 0) + 1;
+        } else if (user2Score > user1Score) {
+          nextStageWinsCount[match.user2_id] = (nextStageWinsCount[match.user2_id] || 0) + 1;
+        }
+      });
+  
+      nextStageUsersArray = Object.keys(nextStageWinsCount).map((id) => ({
+        id: +id,
+        winsCount: nextStageWinsCount[id],
+      }));
+    }
+    
+    return {
+      firstStage: {
+        leagueId: matches.id,
+        users: usersArray,
+      },
+      secondStage: {
+        leagueId: nextLevelMatches?.id || null,
+        users: nextStageUsersArray,
+      },
+    };
   }
 }
 
 module.exports = new WeekendTournamentService();
+
+
+// {
+//   firstStage: {
+//     first: [],
+//     second: [],
+//     second: [],
+//   },
+//   secondStage: {
+//     leagueId: nextLevelMatches?.id || null,
+//     users: nextStageUsersArray,
+//   },
+// }

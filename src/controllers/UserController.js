@@ -437,8 +437,8 @@ class UserController {
           errors: errors.errors,
         });
 
-      const id = req.params.id,
-        row = await UserService.checkUserTempDialogs(id);
+      const id = req.params.id;
+      const row = await UserService.checkUserTempDialogs(id);
 
       if (!row) throw ApiError.BadRequest(`Юзер #${id} не существует!`);
       if (!row.tempDialogs) {
@@ -534,7 +534,11 @@ class UserController {
           errors: errors.errors,
         });
 
-      const isAvilable = await UserService.checkTraining();
+      const isAvilable = await UserService.checkTraining(req.params.id);
+
+      if (isAvilable === null) {
+        throw ApiError.BadRequest(`Юзер #${id} не существует или он бот!`);
+      }
 
       res.json({
         message: "User`s training:",
@@ -558,6 +562,10 @@ class UserController {
       const { id } = req.params;
       const results = await UserService.checkTrainingResults(id);
 
+      if (!results) {
+        throw ApiError.BadRequest(`Юзер #${id} не существует или он бот!`);
+      }
+
       res.json({
         message: "User`s training results:",
         details: {
@@ -578,7 +586,12 @@ class UserController {
         });
 
       const { id } = req.params;
-      const isSeted = await UserService.doTraining(id);
+      const { points } = req.body;
+      const isSeted = await UserService.doTraining(id, points);
+
+      if (!isSeted) {
+        throw ApiError.BadRequest(`Тренировка юзера ${id} не проведена!`);
+      }
 
       res.json({
         message: "User's training has been conducted:",

@@ -297,7 +297,9 @@ class ServerService {
 
       const dataBuffer = await fileHandle.readFile("./src/data/variables.txt");
       const data = JSON.parse(dataBuffer.toString("utf8"));
-      const lastLeagueUpdateTimestamp = new Date(data.lastLeagueUpdateTimestamp);
+      const lastLeagueUpdateTimestamp = new Date(
+        data.lastLeagueUpdateTimestamp
+      );
 
       const allLeagues = await prisma.league.findMany({
         select: {
@@ -324,18 +326,22 @@ class ServerService {
         function roundedArrStep(arr) {
           const [a0, a1, a2, a3, a4, a5, a6, a7] = arr[0];
           const [b0, b1, b2, b3, b4, b5, b6, b7] = arr[1];
-        
+
           arr[0] = [b7, a0, a1, a2, a3, a4, a5, a6];
           arr[1] = [b6, b5, b4, b3, b2, b1, b0, a7];
         }
-        
+
         const halfLength = leaguePlayers.length / 2;
-        const firstTeams = leaguePlayers.slice(0, halfLength).map((p) => p.playerId);
-        const secondTeams = leaguePlayers.slice(halfLength).map((p) => p.playerId);
+        const firstTeams = leaguePlayers
+          .slice(0, halfLength)
+          .map((p) => p.playerId);
+        const secondTeams = leaguePlayers
+          .slice(halfLength)
+          .map((p) => p.playerId);
 
         const allPlayersArr1 = [firstTeams, secondTeams],
           allPlayersArr2 = [[...secondTeams], [...firstTeams]],
-          utcHours = [0, 8, 16];
+          utcHours = [9, 13, 17];
 
         for (let i = 0; i < 5; i++) {
           for (let j = 0; j < 3; j++) {

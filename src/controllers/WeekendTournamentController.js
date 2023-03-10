@@ -29,7 +29,7 @@ class WeekendTournamentController {
             if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
 
             const id = req.params.id;
-            let weekendLeagueMatches = await WeekendTournamentService.getUserWeekendLeague(id);
+            let weekendLeagueMatches = await WeekendTournamentService.getUserWeekendMatches(id);
 
             res.json({
                 message: `Матчи юзера #${id} на выходной лиге:`,
@@ -70,14 +70,13 @@ class WeekendTournamentController {
           const errors = validationResult(req);
           if (!errors.isEmpty()) throw ApiError.BadRequest('Неверные данные!', {errors: errors.errors});
 
-          const leagueId = +req.params.id,
-              users = await WeekendTournamentService.getLeagueLeaderboard(leagueId);
+          const users = await WeekendTournamentService.getLeagueLeaderboard(+req.params.userId);
 
           if (users === null) throw ApiError.BadRequest('Такая лига не была найдена!');
           if (users === []) throw ApiError.BadRequest(`Ещё не было сыграно ни одного матча в лиге #${leagueId}!`);
 
           res.json({
-              message: `Рейтиновая таблица лиги #${leagueId}:`,
+              message: `Рейтиновая таблица:`,
               details: {
                   users
               }

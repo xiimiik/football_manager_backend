@@ -1,5 +1,6 @@
 const { prisma } = require("../../prisma-client");
-const { trainingTime, trainingAvilableTime } = require("../utils/dates.utils");
+const ApiError = require("../exceptions/api-error");
+const { trainingTime, trainingAvailableTime } = require("../utils/dates.utils");
 
 class UserService {
   async getUserInfo(id) {
@@ -247,20 +248,21 @@ class UserService {
 
   async releasePlayer(id, playerId) {
     try {
-      const user_players = await prisma.user_players.findFirst({
-        where: {
-          userId: id,
-        },
-      });
-
-      const lastTeam = await prisma.user.findFirst({
-        where: {
-          id,
-        },
-        select: {
-          lastTeam: true,
-        }
-      });
+      const [user_players, lastTeam] = await prisma.$transaction([
+        prisma.user_players.findFirst({
+          where: {
+            userId: id,
+          },
+        }),
+        prisma.user.findFirst({
+          where: {
+            id,
+          },
+          select: {
+            lastTeam: true,
+          },
+        }),
+      ]);
 
       const playersJson = JSON.parse(user_players.playersJson).filter(
         (player) => player.playerId !== playerId
@@ -275,11 +277,15 @@ class UserService {
         },
       });
 
-      if (JSON.parse(lastTeam.lastTeam).some(player => player.playerId === playerId)) {
+      if (
+        JSON.parse(lastTeam.lastTeam).some(
+          (player) => player.playerId === playerId
+        )
+      ) {
         const lastTeamJson = JSON.parse(lastTeam.lastTeam).filter(
           (player) => player.playerId !== playerId
         );
-        
+
         await prisma.user.update({
           data: {
             lastTeam: JSON.stringify(lastTeamJson),
@@ -403,14 +409,18 @@ class UserService {
   }
 
   async updateUserTempDialogs(id, tempDialogs) {
+    const tempJson = {
+      tempDialogs: tempDialogs,
+    };
+
     try {
       await prisma.user_players.upsert({
         create: {
           userId: id,
-          tempDialogs: JSON.stringify(tempDialogs),
+          tempDialogs: JSON.stringify(tempJson),
         },
         update: {
-          tempDialogs: JSON.stringify(tempDialogs),
+          tempDialogs: JSON.stringify(tempJson),
         },
         where: {
           userId: id,
@@ -423,7 +433,7 @@ class UserService {
   }
 
   async checkUserTempDialogs(id) {
-    return await prisma.user_players.findFirst({
+    const userDialogs = await prisma.user_players.findFirst({
       select: {
         tempDialogs: true,
       },
@@ -431,6 +441,8 @@ class UserService {
         userId: id,
       },
     });
+
+    return JSON.parse(userDialogs.tempDialogs);
   }
 
   async getUserLastPlayedMatch(id) {
@@ -530,19 +542,35 @@ class UserService {
     }
   }
 
-  async checkTraining() {
+  async checkTraining(id) {
+    const userTraining = await prisma.user.findFirst({
+      where: {
+        id,
+      },
+      select: {
+        isBot: true,
+        training: true,
+      },
+    });
+
+    if (!userTraining) {
+      return null;
+    }
+
+    const trainingJson = JSON.parse(userTraining.training);
+
     const now = new Date();
     const [scT, th3, frT] = trainingTime();
 
-    const night = trainingAvilableTime(0);
-    const morning = trainingAvilableTime(8);
-    const day = trainingAvilableTime(16);
+    const night = trainingAvailableTime(9);
+    const morning = trainingAvailableTime(13);
+    const day = trainingAvailableTime(17);
 
-    if (night <= now && now < scT) {
+    if ((night <= now) && (now < scT) && trainingJson.training.isAvailable) {
       return true;
-    } else if (morning <= now && now < th3) {
+    } else if ((morning <= now) && (now < th3) && trainingJson.training.isAvailable) {
       return true;
-    } else if (day <= now && now < frT) {
+    } else if ((day <= now) && (now < frT) && trainingJson.training.isAvailable) {
       return true;
     } else {
       return false;
@@ -551,43 +579,75 @@ class UserService {
 
   async checkTrainingResults(id) {
     try {
-      const { count } = await prisma.training.findFirst({
+      const userTraining = await prisma.user.findFirst({
         where: {
-          playerId: id
+          id,
         },
         select: {
-          count: true,
-        }
+          isBot: true,
+          training: true,
+        },
       });
 
-      return count;
+      if (!userTraining) {
+        return null;
+      }
+
+      if (userTraining.isBot) {
+        return null;
+      }
+
+      const trainingJson = JSON.parse(userTraining.training);
+
+      const training = trainingJson.training;
+
+      await prisma.user.update({
+        where: {
+          id,
+        },
+        data: {
+          training: JSON.stringify([{
+            isAvailable: false,
+            training: [],
+          }]),
+        },
+      });
+
+      return training;
     } catch {
       return null;
     }
   }
 
-  async doTraining(id) {
+  async doTraining(id, points) {
     try {
-      const { count = 1 } = await prisma.training.findFirst({
+      const userTraining = await prisma.user.findFirst({
         where: {
-          playerId: id
+          id,
+          isBot: false,
         },
         select: {
-          count: true,
-        }
-      }) || {};
+          training: true,
+        },
+      });
 
-      await prisma.training.upsert({
-        create: {
-          playerId: id,
-          count,
-        },
+      if (!userTraining) {
+        return false;
+      }
+
+      const trainingJson = JSON.parse(userTraining.training);
+
+      trainingJson.training[trainingJson.length - 1].points += points;
+      trainingJson.training[trainingJson.length - 1].nonPassed -= 1;
+      trainingJson.isAvailable = false;
+
+      await prisma.user.update({
         where: {
-          playerId: id
+          id,
         },
-        update: {
-          count: count + 1,
-        }
+        data: {
+          training: JSON.stringify(trainingJson),
+        },
       });
 
       return true;

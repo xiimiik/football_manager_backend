@@ -4191,7 +4191,7 @@ async function calcMatchesPhase(phase) {
     Date.UTC(
       saturdayTimestamp.getUTCFullYear(),
       saturdayTimestamp.getUTCMonth(),
-      saturdayTimestamp.getUTCDate() + ((phase - 1) < 5 ? 0 : 1),
+      saturdayTimestamp.getUTCDate() + (phase - 1 < 5 ? 0 : 1),
       utcHourCheckpoints[(phase - 1) % 5]
     )
   );
@@ -4407,30 +4407,37 @@ async function weekendLeaguesModule() {
   try {
     const now = new Date();
     const saturdayTimestamp = getSaturdayTimestamp(now);
-    // createWeekendLeagues_v2(saturdayTimestamp);
 
     const sevenDaysMs = 1000 * 60 * 60 * 24 * 7;
-    let nextSaturdayTimestamp = new Date(saturdayTimestamp.getTime() + sevenDaysMs);
+    let nextSaturdayTimestamp = new Date(
+      saturdayTimestamp.getTime() + sevenDaysMs
+    );
 
-    if (saturdayTimestamp.getTime() < now.getTime()) {
+    if (saturdayTimestamp.getTime() > now.getTime()) {
       setTimeout(async () => {
         await createWeekendLeagues_v2(nextSaturdayTimestamp);
-  
+
         setInterval(async () => {
-          nextSaturdayTimestamp = new Date(nextSaturdayTimestamp.getTime() + sevenDaysMs);
+          nextSaturdayTimestamp = new Date(
+            nextSaturdayTimestamp.getTime() + sevenDaysMs
+          );
           await createWeekendLeagues_v2(nextSaturdayTimestamp);
         }, sevenDaysMs);
       }, nextSaturdayTimestamp - now);
 
-      console.log(`All is fine, next weekend leagues update at ${nextSaturdayTimestamp}`);
+      console.log(
+        `All is fine, next weekend leagues update at ${nextSaturdayTimestamp}`
+      );
     } else {
       await createWeekendLeagues_v2(saturdayTimestamp);
 
       setTimeout(async () => {
         await createWeekendLeagues_v2(nextSaturdayTimestamp);
-  
+
         setInterval(async () => {
-          nextSaturdayTimestamp = new Date(nextSaturdayTimestamp.getTime() + sevenDaysMs);
+          nextSaturdayTimestamp = new Date(
+            nextSaturdayTimestamp.getTime() + sevenDaysMs
+          );
           await createWeekendLeagues_v2(nextSaturdayTimestamp);
         }, sevenDaysMs);
       }, nextSaturdayTimestamp - now);

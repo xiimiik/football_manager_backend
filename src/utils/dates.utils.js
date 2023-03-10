@@ -42,7 +42,7 @@ function getSaturdayTimestamp(now) {
   }
 }
 
-function trainingAvilableTime(hours) {
+function trainingAvailableTime(hours) {
   const now = new Date();
   
   return new Date(
@@ -65,7 +65,7 @@ function trainingTime() {
       now.getUTCFullYear(),
       now.getUTCMonth(),
       now.getUTCDate(),
-      8,
+      9,
       0,
       0
     )
@@ -74,7 +74,7 @@ function trainingTime() {
       now.getUTCFullYear(),
       now.getUTCMonth(),
       now.getUTCDate(),
-      16,
+      13,
       0,
       0
     )
@@ -83,17 +83,32 @@ function trainingTime() {
       now.getUTCFullYear(),
       now.getUTCMonth(),
       now.getUTCDate() + 1,
-      0,
+      17,
       0,
       0
     )
   )];
 }
 
+function timeUntilNextScheduledDate(date = new Date()) {
+  const scheduleTimes = [9, 13, 17];
+  const hour = date.getUTCHours();
+  const index = scheduleTimes.findIndex((t) => t > hour);
+  const nextScheduledHour =
+    index !== -1 ? scheduleTimes[index] : scheduleTimes[0];
+  const nextScheduledDate = new Date(date);
+  nextScheduledDate.setUTCHours(nextScheduledHour, 0, 0, 0);
+  if (nextScheduledDate <= date) {
+    nextScheduledDate.setUTCDate(nextScheduledDate.getUTCDate() + 1);
+  }
+  return nextScheduledDate - date;
+}
+
 module.exports = {
   trainingTime,
-  trainingAvilableTime,
+  trainingAvailableTime,
   getSaturdayTimestamp,
   getUTCDateZeroTimestamp,
   getNextNeededWeekDayTimestamp,
+  timeUntilNextScheduledDate,
 };

@@ -1,5 +1,6 @@
 const fileHandle = require("fs/promises");
 const { prisma } = require("../../prisma-client.js");
+const { timeUntilNextScheduledDate } = require("../utils/dates.utils.js");
 const { playDebugMatch_17otr_v3_09I19 } = require("../utils/debug.utils");
 const { generateCard } = require("./players");
 
@@ -34,37 +35,11 @@ async function scheduleLeaguesInterval() {
       let currLeague = allLeagues[leagueIdx];
 
       function roundedArrStep(arr) {
-        let num0 = arr[0][0],
-          num1 = arr[0][1],
-          num2 = arr[0][2],
-          num3 = arr[0][3],
-          num4 = arr[0][4],
-          num5 = arr[0][5],
-          num6 = arr[0][6],
-          num7 = arr[1][7],
-          num8 = arr[1][6],
-          num9 = arr[1][5],
-          num10 = arr[1][4],
-          num11 = arr[1][3],
-          num12 = arr[1][2],
-          num13 = arr[1][1],
-          num14 = arr[1][0];
+        const [a0, a1, a2, a3, a4, a5, a6, a7] = arr[0];
+        const [b0, b1, b2, b3, b4, b5, b6, b7] = arr[1];
 
-        arr[0][0] = num14;
-        arr[0][1] = num0;
-        arr[0][2] = num1;
-        arr[0][3] = num2;
-        arr[0][4] = num3;
-        arr[0][5] = num4;
-        arr[0][6] = num5;
-        arr[1][7] = num6;
-        arr[1][6] = num7;
-        arr[1][5] = num8;
-        arr[1][4] = num9;
-        arr[1][3] = num10;
-        arr[1][2] = num11;
-        arr[1][1] = num12;
-        arr[1][0] = num13;
+        arr[0] = [b7, a0, a1, a2, a3, a4, a5, a6];
+        arr[1] = [b6, b5, b4, b3, b2, b1, b0, a7];
       }
 
       // creation of common leagues ==========================================================================================
@@ -81,7 +56,7 @@ async function scheduleLeaguesInterval() {
 
       let allPlayersArr1 = [firstTeams, secondTeams],
         allPlayersArr2 = [[...secondTeams], [...firstTeams]], // копируем из-за "ссылочности массивов"
-        utcHours = [0, 8, 16];
+        utcHours = [9, 13, 17];
 
       for (let i = 0; i < 5; i++) {
         for (let j = 0; j < 3; j++) {
@@ -286,8 +261,6 @@ async function scheduleMatchesInterval() {
       where,
     });
 
-    console.log(`count: ${matchesCount} `);
-
     if (matchesCount > chunkLength) {
       for (let i = 0; i < Math.floor(matchesCount / chunkLength) + 1; i++) {
         const skip = i * chunkLength;
@@ -297,15 +270,18 @@ async function scheduleMatchesInterval() {
             id: true,
           },
           where,
-          take
+          take,
         });
 
         const queries = [];
         for (const match of chunkOfMatches) {
-          const newQueries = await playDebugMatch_17otr_v3_09I19(match.id, true);
+          const newQueries = await playDebugMatch_17otr_v3_09I19(
+            match.id,
+            true
+          );
           queries.push(...newQueries);
         }
-      
+
         try {
           await prisma.$transaction(queries);
         } catch (e) {
@@ -334,7 +310,43 @@ async function scheduleMatchesInterval() {
     }
     // делим на чанки, потому что вылазит ошибка от призмы из-за одного запроса на большое количество данных ================
 
-    console.log(`Ended playing ${mode} matches (count: ${matchesCount})! `, new Date());
+    console.log(
+      `Ended playing ${mode} matches (count: ${matchesCount})! `,
+      new Date()
+    );
+  }
+
+  async function setTrainingAvailable() {
+    const notBotUsers = await prisma.user.findMany({
+      where: {
+        isBot: false,
+      },
+      select: {
+        id: true,
+        training: true,
+      },
+    });
+
+    const queries = [];
+
+    for (const { training, id } of notBotUsers) {
+      const trainingJson = JSON.parse(training);
+
+      trainingJson.isAvailable = true;
+
+      queries.push(
+        prisma.user.update({
+          where: {
+            id,
+          },
+          data: {
+            training: JSON.stringify(trainingJson),
+          },
+        })
+      );
+    }
+
+    await prisma.$transaction(queries);
   }
 
   async function clearTempPlayer() {
@@ -345,36 +357,28 @@ async function scheduleMatchesInterval() {
     });
   }
 
-  async function clearTempAction() {
-    await prisma.user_players.updateMany({
-      data: {
-        tempAction: null,
-      },
-    });
-  }
-
   try {
     //розыгрыш матчей (установка 8-часовых интервалов)
-    const now = new Date();
-    const eightHoursInMs = 1000 * 60 * 60 * 8;
-    const currentHour = now.getUTCHours() % 8;
-    const msPassed =
-      1000 * 60 * 60 * (currentHour % 8) +
-      1000 * 60 * now.getMinutes() +
-      1000 * now.getSeconds() +
-      now.getMilliseconds();
-    const msLeft = eightHoursInMs - msPassed - 1000 * 60 * 15;
+    const hourInMs = 3600000;
+    const msLeft = timeUntilNextScheduledDate() - 1000 * 60 * 15;
 
     setTimeout(async () => {
       setInterval(async () => {
-        await playMatches("current");
-        await clearTempPlayer();
-        await clearTempAction();
-      }, eightHoursInMs);
+        const now = new Date();
+        const hour = now.getUTCHours();
+
+        setTimeout(async () => {
+          await setTrainingAvailable();
+        }, 6000000);
+
+        if (hour === 8 || hour === 12 || hour === 16) {
+          await playMatches("current");
+          await clearTempPlayer();
+        }
+      }, hourInMs);
 
       await playMatches("current");
       await clearTempPlayer();
-      await clearTempAction();
     }, msLeft);
 
     await playMatches("late"); // разыгровка матчей (если некоторые были во время того, как сервак лежал)

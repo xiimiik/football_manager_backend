@@ -218,14 +218,14 @@ class MathService {
     
     const matchInfo = {
       team1: {
-        id: match.player2.id,
+        id: match.player1.id,
         logo: match.player1.logo,
         name: match.player1.name,
         avatar: match.player1.avatarTb.id,
         teamComposition: match.player1.lastTeam,
       },
       team2: {
-        id: match.player1.id,
+        id: match.player2.id,
         logo: match.player2.logo,
         name: match.player2.name,
         avatar: match.player2.avatarTb.id,

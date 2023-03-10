@@ -238,9 +238,6 @@ UserApiRouter.put(
       .isInt()
       .withMessage("Поле <id> должно быть типа integer!")
       .toInt(),
-    check("tempDialogs")
-      .isJSON()
-      .withMessage("Поле <tempDialogs> должно быть в виде json!"),
   ],
   UserController.updateTempDialogs
 );
@@ -293,7 +290,16 @@ UserApiRouter.post(
   UserController.setClubTalk
 );
 
-UserApiRouter.get("/checkTraining", [], UserController.checkTraining);
+UserApiRouter.get(
+  "/:id/checkTraining",
+  [
+    check("id")
+      .isInt()
+      .withMessage("Поле <id> должно быть типа integer!")
+      .toInt(),
+  ],
+  UserController.checkTraining
+);
 
 UserApiRouter.get(
   "/:id/checkTrainingResults",

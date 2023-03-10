@@ -21,7 +21,6 @@ class BotService {
             {name: "Launders", abbr: "Lnd"},
             {name: "Visors", abbr: "VSR"},
         ];
-        // this.botsIcons = ['Ball', 'Bear', 'Crown', 'Deer', 'Heraldic lion', 'Horse', 'Lighting', 'Lion', 'Spur', 'Tiger', 'Vector', 'Wolf'],
         this.botsIcons = ["bee", "cherry", "city", "cottager", "devil", "eagle", "forest", "fox", "gun", "hammer", "magpie", "pen", "reds", "seagull", "toffee", "villian"];
         this.botsColors = ["#090E19FF", "#135AE0FF", "#A01843FF", "#A5FF5BFF", "#EC242DFF", "#90CAFFFF", "#FAFCFFFF", "#FFDA25FF"];
         this.patternMinValue = 0;
